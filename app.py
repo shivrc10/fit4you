@@ -1,209 +1,210 @@
-from flask import Flask, request, jsonify
-import json
-from concurrent.futures import ThreadPoolExecutor
+import streamlit as st
+import time
+from planner import generate_plan
 
-from agents import ollama_chat
+# ---------------------------------------------------
+# PAGE CONFIG
+# ---------------------------------------------------
+st.set_page_config(page_title="HealthAgents", layout="wide")
 
-app = Flask(__name__)
-pool = ThreadPoolExecutor(max_workers=1)  # keep 1 for Mac stability
+# ---------------------------------------------------
+# LOAD CSS
+# ---------------------------------------------------
+with open("styles.css") as f:
+    st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
-MODELS = {
-    "planner": "llama3.2:latest",
-    "alternative": "gemma:2b",
-    "safety": "gemma:2b",
-    "summarizer": "llama3.2:latest",
-}
+# ---------------------------------------------------
+# SESSION STATE
+# ---------------------------------------------------
+for k, v in {"loading": False, "plan": None, "progress": 0, "cancel": False}.items():
+    if k not in st.session_state:
+        st.session_state[k] = v
 
-def extract_json(text: str):
-    text = (text or "").strip()
-    if not text:
-        raise ValueError("Empty model output")
-    if text.startswith("{") and text.endswith("}"):
-        return json.loads(text)
-    start = text.find("{")
-    end = text.rfind("}")
-    if start != -1 and end != -1 and end > start:
-        return json.loads(text[start:end+1])
-    raise ValueError("No JSON object found")
+# ---------------------------------------------------
+# NAVBAR
+# ---------------------------------------------------
+n1, n2, n3 = st.columns([2, 6, 2])
 
-def llm_json_with_retry(model, system, prompt, temperature=0.0):
-    out1 = ollama_chat(model, system, prompt, temperature)
-    try:
-        return extract_json(out1)
-    except Exception:
-        repair = f"""
-Fix the following into valid JSON only.
-Also ensure it contains ONLY these top-level keys:
-plan_primary, plan_alternatives, safety, questions_to_user, metadata.
-plan_alternatives must be a list.
+with n1:
+    st.markdown("### 🩺 HealthAgents")
 
-INVALID:
-{out1}
+with n2:
+    st.markdown(
+        """
+        <div class="nav-right">
+            <span class="nav-item">Home</span>
+            <span class="nav-item">Profile</span>
+            <span class="nav-active">My Plan</span>
+            <span class="nav-item">About</span>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
-Return corrected JSON only.
-"""
+# Temporary mock user (replace later with real auth)
+username = "tanvi"
 
-@app.post("/generate-plan")
-def generate_plan():
-    data = request.get_json(force=True)
-    profile = data.get("profile", {})
-    goal = data.get("goal", "")
+with n3:
+    st.markdown(
+        f"""
+        <div class="user-info">
+            <span class="user-icon">👤</span>
+            <div class="user-text">
+                <span class="user-label">Logged in as</span>
+                <span class="user-name">{username}</span>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
-    system_json = "Return ONLY valid JSON. No markdown. Start with { and end with }."
+st.divider()
 
-    planner_user = f"""
-User profile JSON:
-{json.dumps(profile, ensure_ascii=False)}
+# ---------------------------------------------------
+# MAIN LAYOUT
+# ---------------------------------------------------
+left, right = st.columns([1, 2.2], gap="large")
 
-Goal:
-{goal}
+# ---------------------------------------------------
+# LEFT COLUMN
+# ---------------------------------------------------
+with left:
+    # Profile card
+    with st.container(key="card-profile"):
+        st.subheader("Profile & Goal Input")
+        st.caption("Tell us a bit about yourself to generate a plan")
 
-Create a 2-week plan + rules to extend to weeks 3–8 (do NOT write weeks 3–8).
-Must be knee-friendly if injuries include knee pain.
-Return ONLY JSON with keys:
-plan_name, week_1, week_2, progression_rules_weeks_3_to_8, warmup, cooldown, nutrition_timing, habits, questions
-"""
+        age = st.text_input("Profile")
+        goal = st.text_input("Goal", placeholder="e.g. lose weight, improve stamina")
 
-    alt_user = f"""
-User profile JSON:
-{json.dumps(profile, ensure_ascii=False)}
+        error_box = st.empty()
 
-Goal:
-{goal}
+        if st.button("Generate My Plan"):
+            if not goal.strip():
+                error_box.warning("Please describe your goal so we can personalize your plan.")
+            else:
+                error_box.empty()
+                st.session_state.loading = True
+                st.session_state.plan = None
+                st.session_state.progress = 0
+                st.session_state.cancel = False
 
-Create TWO alternatives (2-week plans) that match EXACTLY the same schema as the planner output:
-plan_name, week_1, week_2, progression_rules_weeks_3_to_8, warmup, cooldown, nutrition_timing, habits, questions
+    # Agents card
+    # with st.container(key="card-agents"):
+    #     st.subheader("Agents Working")
 
-Constraints:
-- Plan B: time-efficient (short sessions)
-- Plan C: equipment-light (bodyweight/bands)
+    #     bar = st.progress(st.session_state.progress)
+    #     status = st.empty()
 
-Rules:
-- No numeric weights (use RPE 1-10 or light/medium/heavy).
-- Keep it knee-friendly if injuries include knee pain.
+    #     cancel_placeholder = st.empty()
 
-Return ONLY JSON with key:
-alternatives (list of exactly 2 plans)
-"""
+    #     if st.session_state.loading:
+    #         with cancel_placeholder.container():
+    #             if st.button(
+    #                 "Cancel generation", key="cancel_gen", help="Stop plan generation"
+    #             ):
+    #                 st.session_state.cancel = True
+    #                 st.session_state.loading = False
+    #                 status.warning("Generation cancelled")
+    #                 st.stop()
 
+    #         steps = [
+    #             ("🍎 Nutrition agent analyzing", 30),
+    #             ("🏃 Exercise agent planning", 60),
+    #             ("😴 Sleep agent optimizing", 90),
+    #             ("📊 Finalizing plan", 100),
+    #         ]
 
-    safety_user = f"""
-User profile JSON:
-{json.dumps(profile, ensure_ascii=False)}
+    #         for text, target in steps:
+    #             if st.session_state.cancel:
+    #                 break
+    #             status.info(text)
+    #             for i in range(st.session_state.progress, target, 4):
+    #                 time.sleep(0.05)
+    #                 st.session_state.progress = i
+    #                 bar.progress(i)
 
-Goal:
-{goal}
+    #         if not st.session_state.cancel:
+    #             st.session_state.plan = generate_plan({"age": age, "goal": goal})
+    #             st.session_state.loading = False
+    #             status.success("✅ All agents completed successfully")
 
-Safety check: risks, safer substitutions, stop signs, recovery notes.
-Return ONLY JSON with keys:
-risks, safer_substitutions, stop_signs, recovery_notes
-"""
+    #     else:
+    #         status.caption("Waiting to generate your personalized plan")
+    
+    with st.container(key="card-agents"):
+        st.subheader("Agents Working")
+        status = st.empty()
+        bar = st.progress(st.session_state.progress)
 
-    # sequential for stability (later we can parallelize)
-    plan_a_raw = ollama_chat(MODELS["planner"], system_json, planner_user, 0.2)
-    alts_raw   = ollama_chat(MODELS["alternative"], system_json, alt_user, 0.3)
-    safety_raw = ollama_chat(MODELS["safety"], system_json, safety_user, 0.2)
+        if not st.session_state.loading and not st.session_state.plan:
+            status.caption("Agents are waiting for your input.")
 
-    # summarizer merges everything into one clean schema
-    summarizer_user = f"""
-Merge these JSON blobs into ONE final app response.
+        elif st.session_state.loading:
+            focus = infer_focus(goal)
 
-Planner JSON:
-{plan_a_raw}
+            steps = [
+                ("Understanding your goal…", 15),
+                ("🍎 Nutrition agent working…" if focus in ["nutrition", "balanced"] else "🍎 Nutrition agent waiting…", 40),
+                ("🏃 Exercise agent working…" if focus in ["exercise", "balanced"] else "🏃 Exercise agent waiting…", 70),
+                ("😴 Sleep agent optimizing recovery…", 90),
+                ("Finalizing your plan…", 100)
+            ]
 
-Alternatives JSON:
-{alts_raw}
+            for text, target in steps:
+                if st.session_state.cancel:
+                    status.warning("Generation cancelled.")
+                    break
 
-Safety JSON:
-{safety_raw}
+                status.info(text)
+                for i in range(st.session_state.progress, target):
+                    time.sleep(0.03)
+                    st.session_state.progress = i
+                    bar.progress(i)
 
-Return ONLY JSON with keys:
-plan_primary, plan_alternatives, safety, questions_to_user, metadata
-- questions_to_user: max 4 unique questions total
-- metadata: include models_used
-"""
+            if not st.session_state.cancel:
+                st.session_state.plan = generate_plan({"age": age, "goal": goal})
+                st.session_state.loading = False
+                status.success("All agents completed successfully.")
 
-    # final_raw = ollama_chat(MODELS["summarizer"], system_json, summarizer_user, 0.0)
-    final = llm_json_with_retry(MODELS["summarizer"], system_json, summarizer_user, 0.0)
+# ---------------------------------------------------
+# RIGHT COLUMN — PLAN OUTPUT (NO SCORE)
+# ---------------------------------------------------
+with right:
+    with st.container(key="gradient-main"):
+        st.subheader("Your Personalized Plan")
 
-    try:
-        final = extract_json(final_raw)
-        final.setdefault("metadata", {})
-        final["metadata"]["models_used"] = MODELS
-        return jsonify(final)
-    except Exception as e:
-        return jsonify({
-            "error": "Final output not valid JSON",
-            "exception": str(e),
-            "raw_preview": (final_raw or "")[:1500],
-            "debug": {
-                "plan_a_preview": (plan_a_raw or "")[:700],
-                "alts_preview": (alts_raw or "")[:700],
-                "safety_preview": (safety_raw or "")[:700],
-            }
-        }), 500
+        if st.session_state.plan:
+            plan = st.session_state.plan
 
-@app.get("/health")
-def health():
-    return {"status": "ok"}
+            c1, c2, c3 = st.columns(3)
 
-@app.post("/revise-plan")
-def revise_plan():
-    data = request.get_json(force=True)
+            with c1:
+                with st.container(key="plan-morning"):
+                    st.markdown("### ☀ Morning Routine")
+                    st.markdown("- Balanced nutrition\n- Regular meal timing")
 
-    previous_output = data.get("previous_output", {})
-    feedback = (data.get("feedback", "") or "").strip()
+            with c2:
+                with st.container(key="plan-afternoon"):
+                    st.markdown("### 🕒 Afternoon Focus")
+                    st.markdown("- 20–30 min moderate activity\n- Stretch breaks")
 
-    if not previous_output:
-        return jsonify({"error": "previous_output is required"}), 400
-    if not feedback:
-        return jsonify({"error": "feedback is required"}), 400
+            with c3:
+                with st.container(key="plan-evening"):
+                    st.markdown("### 🌙 Evening Wind-down")
+                    st.markdown("- Light dinner\n- Screen-free before bed")
 
-    system_json = "Return ONLY valid JSON. No markdown. Start with { and end with }."
+            st.download_button(
+                "📄 Download Plan", data=str(plan), file_name="health_plan.txt"
+            )
 
-    revise_prompt = f"""
-You are an expert editor of fitness plans.
+        else:
+            st.info("Your plan will appear here after generation")
 
-Previous output JSON (this defines the required schema):
-{json.dumps(previous_output, ensure_ascii=False)}
-
-Expert feedback to apply:
-{feedback}
-
-STRICT RULES (must follow):
-1) Return ONLY ONE JSON object.
-2) Keep EXACTLY these top-level keys (no new top-level keys):
-plan_primary, plan_alternatives, safety, questions_to_user, metadata
-3) plan_alternatives MUST be a LIST (array). Never an object.
-4) Do NOT change data types of any existing fields.
-5) Respect profile constraints implied in the plan:
-- days_per_week MUST stay 4
-- knee-friendly: no jumping/running if knee pain present
-6) Do NOT invent numbers like weights (use RPE 1-10 or "light/medium/heavy").
-7) If you need knee flare-up options, add them INSIDE:
-plan_primary.week_1 and plan_primary.week_2 (as "flare_up_option")
-and similarly for each alternative week_1/week_2.
-8) Keep week structure: week_1 and week_2 must remain present in plan_primary.
-9) Output must start with {{ and end with }}.
-
-Now revise the plan applying the feedback while preserving the schema.
-Return ONLY the revised JSON.
-"""
-
-
-    try:
-        revised = llm_json_with_retry(MODELS["summarizer"], system_json, revise_prompt, 0.0)
-        revised.setdefault("metadata", {})
-        revised["metadata"]["models_used"] = MODELS
-        revised["metadata"]["revision_applied"] = True
-        return jsonify(revised)
-    except Exception as e:
-        return jsonify({
-            "error": "Revised output not valid JSON",
-            "exception": str(e)
-        }), 500
-
-
-
-if __name__ == "__main__":
-    app.run(host="127.0.0.1", port=8000, debug=True)
+# ---------------------------------------------------
+# FOOTER
+# ---------------------------------------------------
+st.markdown(
+    '<div class="footer">HealthAgents · v0.1 · Research Prototype</div>',
+    unsafe_allow_html=True,
+)

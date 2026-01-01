@@ -1,34 +1,19 @@
-import requests
+# agents.py
 
-OLLAMA_URL = "http://localhost:11434/api/chat"
+def nutrition_agent(profile):
+    goal = profile.get("goal", "")
+    if goal == "Weight Loss":
+        return "Protein-rich meals, calorie control, hydration reminders"
+    elif goal == "Muscle Gain":
+        return "High-protein meals, frequent snacks"
+    else:
+        return "Balanced nutrition and regular meals"
 
-def ollama_chat(model: str, system: str, user: str, temperature: float = 0.2) -> str:
-    payload = {
-        "model": model,
-        "format": "json",
-        "messages": [
-            {"role": "system", "content": system},
-            {"role": "user", "content": user},
-        ],
-        "options": {
-            "temperature": temperature,
-            "num_predict": 900,
-        },
-        "stream": False
-    }
 
-    r = requests.post(OLLAMA_URL, json=payload, timeout=(10, 600))
+def exercise_agent(profile):
+    # Default logic without activity
+    return "20–30 min moderate activity (walking, stretching, light strength)"
 
-    # If Ollama returned an error, show it
-    if r.status_code != 200:
-        raise RuntimeError(f"Ollama HTTP {r.status_code}: {r.text[:500]}")
 
-    # Parse JSON
-    data = r.json()
-
-    # Debug: show what keys exist if format differs
-    if "message" not in data:
-        raise RuntimeError(f"Unexpected Ollama response: {str(data)[:800]}")
-
-    content = data["message"].get("content", "")
-    return content or ""
+def sleep_agent(profile):
+    return "7–8 hours sleep, screen-free 1 hour before bed"

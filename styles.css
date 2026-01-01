@@ -1,0 +1,188 @@
+/* =========================================================
+   PAGE BACKGROUND
+   ========================================================= */
+
+.stApp {
+    background:
+    /* #191970 */
+        radial-gradient(circle at 85% 10%, rgba(20,184,166,0.35), transparent 45%),
+        radial-gradient(circle at 10% 90%, rgba(59,130,246,0.35), transparent 45%),
+        linear-gradient(135deg, #f9fcfd 0%, #e6f6f3 100%);
+    background-attachment: fixed;
+}
+
+/* Reset */
+.stContainer { padding: 0 !important; }
+html, body { font-family: Inter, system-ui, sans-serif; }
+
+/* =========================================================
+   NAVBAR
+   ========================================================= */
+/* .nav-item {
+    color: #64748b;
+    font-weight: 500;
+    margin: 0 12px;
+} */
+
+/* .nav-active {
+    color: #0f172a;
+    font-weight: 600;
+    border-bottom: 2px solid #3b82f6;
+    padding-bottom: 4px;
+} */
+
+/* =========================================================
+   NAVBAR (RIGHT-ALIGNED)
+   ========================================================= */
+
+.nav-right {
+    display: flex;
+    justify-content: flex-end;   /* pushes items to right */
+    align-items: center;
+    width: 100%;
+}
+
+.nav-item {
+    color: #64748b;              /* softer for dark bg */
+    font-weight: 500;
+    margin-left: 20px;           /* spacing between items */
+    cursor: pointer;
+}
+
+.nav-item:hover {
+    color: #e0f2fe; /* soft ice blue */
+    text-shadow: 0 0 6px rgba(56, 189, 248, 0.6);
+    transition: color 0.2s ease, text-shadow 0.2s ease;
+}
+
+.nav-active {
+    color: #7d7676;
+    font-weight: 600;
+    border-bottom: 2px solid #3b82f6;
+    padding-bottom: 4px;
+    margin-left: 20px;
+}
+
+
+/* =========================================================
+   CARDS (GLASS)
+   ========================================================= */
+.st-key-card-profile,
+.st-key-card-agents {
+    background: rgba(255,255,255,0.82);
+    backdrop-filter: blur(18px);
+    padding: 28px;
+    border-radius: 20px;
+    box-shadow: 0 12px 32px rgba(15,118,110,0.12);
+    margin-bottom: 28px;
+}
+
+.st-key-gradient-main {
+    background: rgba(255,255,255,0.65);
+    backdrop-filter: blur(26px);
+    padding: 40px;
+    border-radius: 28px;
+    box-shadow: 0 30px 80px rgba(15,118,110,0.18);
+}
+
+/* =========================================================
+   PLAN CARDS
+   ========================================================= */
+.st-key-plan-morning,
+.st-key-plan-afternoon,
+.st-key-plan-evening {
+    background: rgba(255,255,255,0.9);
+    padding: 24px;
+    border-radius: 18px;
+    box-shadow: 0 14px 28px rgba(15,118,110,0.14);
+}
+
+/* =========================================================
+   BUTTONS
+   ========================================================= */
+.stButton > button {
+    background: linear-gradient(180deg,#3b82f6,#2563eb);
+    color: white;
+    border-radius: 999px;
+    padding: 14px 34px;
+    font-weight: 600;
+    box-shadow: 0 14px 34px rgba(59,130,246,0.4);
+}
+
+/* =========================================================
+   SECONDARY / TEXT BUTTON (CANCEL)
+   ========================================================= */
+/* Text-style cancel button */
+.stButton button[key="cancel_gen"] {
+    background: transparent !important;
+    color: #64748b !important;
+    box-shadow: none !important;
+    padding: 4px 6px !important;
+    font-size: 13px !important;
+}
+
+
+
+/* =========================================================
+   INPUTS
+   ========================================================= */
+input, textarea {
+    border-radius: 14px !important;
+    padding: 12px 14px !important;
+    border: 1px solid #cbd5e1 !important;
+}
+
+/* =========================================================
+   PROGRESS
+   ========================================================= */
+.stProgress > div > div > div {
+    background: linear-gradient(90deg,#3b82f6,#14b8a6);
+    border-radius: 999px;
+}
+
+/* =========================================================
+   TEXT
+   ========================================================= */
+h1, h2, h3 { color: #0f172a; font-weight: 600; }
+p, label { color: #334155; }
+
+.footer {
+    text-align: center;
+    font-size: 13px;
+    color: #64748b;
+    margin-top: 48px;
+}
+
+/* =========================================================
+   USER INFO (TOP RIGHT)
+   ========================================================= */
+
+.user-info {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    color: #e2e8f0;
+}
+
+.user-icon {
+    font-size: 20px;
+}
+
+.user-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.1;
+    text-align: right;
+}
+
+.user-label {
+    font-size: 11px;
+    color: #94a3b8;
+}
+
+.user-name {
+    font-size: 14px;
+    font-weight: 600;
+    color:#334155;
+}
