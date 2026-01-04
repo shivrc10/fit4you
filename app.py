@@ -16,9 +16,9 @@ with open("styles.css") as f:
 # ---------------------------------------------------
 # SESSION STATE
 # ---------------------------------------------------
-for k, v in {"loading": False, "plan": None, "progress": 0, "cancel": False}.items():
-    if k not in st.session_state:
-        st.session_state[k] = v
+st.session_state.setdefault("loading", False)
+st.session_state.setdefault("plan", None)
+st.session_state.setdefault("progress", 0)
 
 # ---------------------------------------------------
 # NAVBAR
@@ -32,8 +32,8 @@ with n2:
     st.markdown(
         """
         <div class="nav-right">
-            <span class="nav-item">Home</span>
-            <span class="nav-item">Profile</span>
+            <span class="nav-item">Overview</span>
+            <span class="nav-item">How it works</span>
             <span class="nav-active">My Plan</span>
             <span class="nav-item">About</span>
         </div>
@@ -41,17 +41,13 @@ with n2:
         unsafe_allow_html=True,
     )
 
-# Temporary mock user (replace later with real auth)
-username = "tanvi"
-
 with n3:
     st.markdown(
-        f"""
+        """
         <div class="user-info">
-            <span class="user-icon">👤</span>
-            <div class="user-text">
-                <span class="user-label">Logged in as</span>
-                <span class="user-name">{username}</span>
+            <div>
+                <div class="user-label">Logged in as</div>
+                <div class="user-name">tanvi</div>
             </div>
         </div>
         """,
@@ -66,145 +62,115 @@ st.divider()
 left, right = st.columns([1, 2.2], gap="large")
 
 # ---------------------------------------------------
-# LEFT COLUMN
+# INPUT SECTION
 # ---------------------------------------------------
 with left:
-    # Profile card
     with st.container(key="card-profile"):
-        st.subheader("Profile & Goal Input")
-        st.caption("Tell us a bit about yourself to generate a plan")
+        st.subheader("Profile & Goal")
+        st.caption("Enter information to generate your plan")
 
-        age = st.text_input("Profile")
-        goal = st.text_input("Goal", placeholder="e.g. lose weight, improve stamina")
+        profile = st.text_area(
+            "Profile",
+            placeholder="Age, lifestyle, preferences (free text)",
+            height=100,
+        )
 
-        error_box = st.empty()
+        goal = st.text_input(
+            "Goal",
+            placeholder="e.g. lose weight, improve stamina",
+        )
+
+        error = st.empty()
 
         if st.button("Generate My Plan"):
             if not goal.strip():
-                error_box.warning("Please describe your goal so we can personalize your plan.")
+                error.warning("Please enter a goal.")
             else:
-                error_box.empty()
+                error.empty()
                 st.session_state.loading = True
                 st.session_state.plan = None
                 st.session_state.progress = 0
-                st.session_state.cancel = False
-
-    # Agents card
-    # with st.container(key="card-agents"):
-    #     st.subheader("Agents Working")
-
-    #     bar = st.progress(st.session_state.progress)
-    #     status = st.empty()
-
-    #     cancel_placeholder = st.empty()
-
-    #     if st.session_state.loading:
-    #         with cancel_placeholder.container():
-    #             if st.button(
-    #                 "Cancel generation", key="cancel_gen", help="Stop plan generation"
-    #             ):
-    #                 st.session_state.cancel = True
-    #                 st.session_state.loading = False
-    #                 status.warning("Generation cancelled")
-    #                 st.stop()
-
-    #         steps = [
-    #             ("🍎 Nutrition agent analyzing", 30),
-    #             ("🏃 Exercise agent planning", 60),
-    #             ("😴 Sleep agent optimizing", 90),
-    #             ("📊 Finalizing plan", 100),
-    #         ]
-
-    #         for text, target in steps:
-    #             if st.session_state.cancel:
-    #                 break
-    #             status.info(text)
-    #             for i in range(st.session_state.progress, target, 4):
-    #                 time.sleep(0.05)
-    #                 st.session_state.progress = i
-    #                 bar.progress(i)
-
-    #         if not st.session_state.cancel:
-    #             st.session_state.plan = generate_plan({"age": age, "goal": goal})
-    #             st.session_state.loading = False
-    #             status.success("✅ All agents completed successfully")
-
-    #     else:
-    #         status.caption("Waiting to generate your personalized plan")
-    
-    with st.container(key="card-agents"):
-        st.subheader("Agents Working")
-        status = st.empty()
-        bar = st.progress(st.session_state.progress)
-
-        if not st.session_state.loading and not st.session_state.plan:
-            status.caption("Agents are waiting for your input.")
-
-        elif st.session_state.loading:
-            focus = infer_focus(goal)
-
-            steps = [
-                ("Understanding your goal…", 15),
-                ("🍎 Nutrition agent working…" if focus in ["nutrition", "balanced"] else "🍎 Nutrition agent waiting…", 40),
-                ("🏃 Exercise agent working…" if focus in ["exercise", "balanced"] else "🏃 Exercise agent waiting…", 70),
-                ("😴 Sleep agent optimizing recovery…", 90),
-                ("Finalizing your plan…", 100)
-            ]
-
-            for text, target in steps:
-                if st.session_state.cancel:
-                    status.warning("Generation cancelled.")
-                    break
-
-                status.info(text)
-                for i in range(st.session_state.progress, target):
-                    time.sleep(0.03)
-                    st.session_state.progress = i
-                    bar.progress(i)
-
-            if not st.session_state.cancel:
-                st.session_state.plan = generate_plan({"age": age, "goal": goal})
-                st.session_state.loading = False
-                status.success("All agents completed successfully.")
 
 # ---------------------------------------------------
-# RIGHT COLUMN — PLAN OUTPUT (NO SCORE)
+# AGENTS WORKING — INLINE (ONLY WHEN LOADING)
+# ---------------------------------------------------
+if st.session_state.loading:
+    st.markdown("### Generating your plan")
+
+    status = st.empty()
+    bar = st.progress(0)
+    agent_ui = st.empty()
+
+    steps = [
+        ("Analyzing profile", 30, 0),
+        ("Generating recommendations", 65, 1),
+        ("Finalizing plan", 100, 2),
+    ]
+
+    icons = ["🧠", "📋", "✅"]
+
+    for text, target, idx in steps:
+        status.info(text)
+        for i in range(st.session_state.progress, target):
+            time.sleep(0.02)
+            st.session_state.progress = i
+            bar.progress(i)
+
+            row = '<div class="agent-row">'
+            for j, icon in enumerate(icons):
+                if j < idx:
+                    cls = "agent-icon completed"
+                elif j == idx:
+                    cls = "agent-icon active"
+                else:
+                    cls = "agent-icon"
+                row += f'<div class="{cls}">{icon}</div>'
+            row += "</div>"
+
+            agent_ui.markdown(row, unsafe_allow_html=True)
+
+    st.session_state.plan = generate_plan(
+        {"profile": profile, "goal": goal}
+    )
+    st.session_state.loading = False
+
+# ---------------------------------------------------
+# OUTPUT SECTION
 # ---------------------------------------------------
 with right:
     with st.container(key="gradient-main"):
         st.subheader("Your Personalized Plan")
 
         if st.session_state.plan:
-            plan = st.session_state.plan
-
             c1, c2, c3 = st.columns(3)
 
             with c1:
                 with st.container(key="plan-morning"):
-                    st.markdown("### ☀ Morning Routine")
-                    st.markdown("- Balanced nutrition\n- Regular meal timing")
+                    st.markdown("### ☀ Morning")
+                    st.markdown("- Balanced meals\n- Light activity")
 
             with c2:
                 with st.container(key="plan-afternoon"):
-                    st.markdown("### 🕒 Afternoon Focus")
-                    st.markdown("- 20–30 min moderate activity\n- Stretch breaks")
+                    st.markdown("### 🕒 Afternoon")
+                    st.markdown("- Movement breaks\n- Hydration")
 
             with c3:
                 with st.container(key="plan-evening"):
-                    st.markdown("### 🌙 Evening Wind-down")
-                    st.markdown("- Light dinner\n- Screen-free before bed")
+                    st.markdown("### 🌙 Evening")
+                    st.markdown("- Light dinner\n- Wind-down routine")
 
             st.download_button(
-                "📄 Download Plan", data=str(plan), file_name="health_plan.txt"
+                "📄 Download Plan",
+                data=str(st.session_state.plan),
+                file_name="health_plan.txt",
             )
-
         else:
-            st.info("Your plan will appear here after generation")
+            st.info("Generate a plan to see recommendations")
 
 # ---------------------------------------------------
 # FOOTER
 # ---------------------------------------------------
 st.markdown(
-    '<div class="footer">HealthAgents · v0.1 · Research Prototype</div>',
+    '<div class="footer">HealthAgents · Research Prototype</div>',
     unsafe_allow_html=True,
 )
