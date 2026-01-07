@@ -1,7 +1,4 @@
-/* =========================================================
-   PAGE BACKGROUND
-   ========================================================= */
-
+/* styles.css - COMPLETE WORKING VERSION */
 .stApp {
     background:
         radial-gradient(circle at 85% 10%, rgba(20,184,166,0.28), transparent 45%),
@@ -10,25 +7,19 @@
     background-attachment: fixed;
 }
 
-/* =========================================================
-   RESET & BASE
-   ========================================================= */
-
-.stContainer { padding: 0 !important; }
+.stContainer {
+    padding: 0 !important;
+}
 
 html, body {
     font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-/* =========================================================
-   NAVBAR
-   ========================================================= */
-
+/* NAVBAR */
 .nav-right {
     display: flex;
     justify-content: flex-end;
     align-items: center;
-    width: 100%;
 }
 
 .nav-item {
@@ -51,15 +42,10 @@ html, body {
     margin-left: 22px;
 }
 
-/* =========================================================
-   USER INFO
-   ========================================================= */
-
+/* USER INFO */
 .user-info {
     display: flex;
-    align-items: center;
     justify-content: flex-end;
-    gap: 10px;
 }
 
 .user-label {
@@ -73,13 +59,11 @@ html, body {
     color: #334155;
 }
 
-/* =========================================================
-   CARDS
-   ========================================================= */
-
-.st-key-card-profile {
+/* GLASS CARDS */
+.st-key-card-profile,
+.st-key-card-agents {
     background: rgba(255,255,255,0.85);
-    backdrop-filter: blur(18px);
+    backdrop-filter: blur(16px);
     padding: 28px;
     border-radius: 20px;
     box-shadow: 0 14px 34px rgba(15,118,110,0.12);
@@ -88,24 +72,24 @@ html, body {
 
 .st-key-gradient-main {
     background: rgba(255,255,255,0.65);
-    backdrop-filter: blur(26px);
+    backdrop-filter: blur(22px);
     padding: 40px;
     border-radius: 28px;
     box-shadow: 0 30px 80px rgba(15,118,110,0.18);
 }
 
-.st-key-plan {
+/* PLAN SECTIONS */
+.st-key-plan-morning,
+.st-key-plan-afternoon,
+.st-key-plan-evening {
     background: rgba(255,255,255,0.92);
     padding: 24px;
     border-radius: 18px;
     box-shadow: 0 14px 28px rgba(15,118,110,0.14);
 }
 
-/* =========================================================
-   BUTTONS
-   ========================================================= */
-
-.stButton > button {
+/* PRIMARY BUTTONS */
+.stButton > button:not([key^="agent_btn_"]) {
     background: linear-gradient(180deg, #3b82f6, #2563eb);
     color: white;
     border-radius: 999px;
@@ -113,70 +97,67 @@ html, body {
     font-weight: 600;
     border: none;
     box-shadow: 0 14px 34px rgba(59,130,246,0.4);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-/* =========================================================
-   INPUTS
-   ========================================================= */
+.stButton > button:not([key^="agent_btn_"]):hover {
+    transform: translateY(-1px);
+    box-shadow: 0 18px 42px rgba(59,130,246,0.5);
+}
 
-input, textarea {
+/* AGENT BUTTONS - PERFECT ROUND ICONS */
+div[data-testid="stButton"][key^="agent_btn_"] > button {
+    width: 70px !important;
+    height: 70px !important;
+    border-radius: 50% !important;
+    border: 2px solid #3b82f6 !important;
+    background: white !important;
+    font-size: 28px !important;
+    color: #3b82f6 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: all 0.2s ease !important;
+    margin: 0 auto !important;
+}
+
+div[data-testid="stButton"][key^="agent_btn_"] > button:hover:not(:disabled) {
+    transform: scale(1.1) !important;
+    box-shadow: 0 12px 28px rgba(59,130,246,0.4) !important;
+}
+
+div[data-testid="stButton"][key^="agent_btn_"] > button:disabled {
+    opacity: 0.5 !important;
+    cursor: not-allowed !important;
+    border-color: #d1d5db !important;
+}
+
+/* INPUTS */
+input,
+textarea {
     border-radius: 14px !important;
     padding: 12px 14px !important;
     border: 1px solid #cbd5e1 !important;
     font-size: 14px;
 }
 
-input:focus, textarea:focus {
+input:focus,
+textarea:focus {
     outline: none;
     border-color: #3b82f6 !important;
     box-shadow: 0 0 0 3px rgba(59,130,246,0.2) !important;
 }
 
-/* =========================================================
-   PROGRESS + ANIMATION
-   ========================================================= */
-
+/* PROGRESS BAR */
 .stProgress > div > div > div {
     background: linear-gradient(90deg, #3b82f6, #14b8a6);
+    height: 10px;
     border-radius: 999px;
 }
 
-/* =========================================================
-   AGENT ICONS
-   ========================================================= */
-
-.agent-row {
-    display: flex;
-    gap: 16px;
-    margin: 12px 0;
-}
-
-.agent-icon {
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    background: rgba(148,163,184,0.25);
-    color: #94a3b8;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
-}
-
-.agent-icon.active {
-    background: linear-gradient(135deg, #3b82f6, #14b8a6);
-    color: white;
-}
-
-.agent-icon.completed {
-    background: linear-gradient(135deg, #22c55e, #16a34a);
-    color: white;
-}
-
-/* =========================================================
-   FOOTER
-   ========================================================= */
-
+/* FOOTER */
 .footer {
     text-align: center;
     font-size: 13px;

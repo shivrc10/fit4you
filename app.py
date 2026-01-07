@@ -1,28 +1,71 @@
+# app.py - COMPLETE WORKING VERSION
 import streamlit as st
 import time
 from planner import generate_plan
 
-# ---------------------------------------------------
+# ===================================================
+# AGENT DIALOG
+# ===================================================
+@st.dialog("Agent details")
+def show_agent_dialog(agent_name: str):
+    st.markdown(f"### {agent_name}")
+    st.markdown(
+        """
+        **Status:**  
+        Details about this agent's contribution to your plan.
+        """
+    )
+    if st.button("Close"):
+        st.session_state.selected_agent = None
+        st.rerun()
+
+# ===================================================
 # PAGE CONFIG
-# ---------------------------------------------------
+# ===================================================
 st.set_page_config(page_title="HealthAgents", layout="wide")
 
-# ---------------------------------------------------
+# ===================================================
 # LOAD CSS
-# ---------------------------------------------------
+# ===================================================
 with open("styles.css") as f:
     st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
-# ---------------------------------------------------
-# SESSION STATE
-# ---------------------------------------------------
-st.session_state.setdefault("loading", False)
-st.session_state.setdefault("plan", None)
-st.session_state.setdefault("progress", 0)
+# ===================================================
+# SESSION STATE INITIALIZATION
+# ===================================================
+defaults = {
+    "started": False,
+    "loading": False,
+    "plan": None,
+    "progress": 0,
+    "agent_step": 0,
+    "completed_agents": set(),
+    "profile_text": "",
+    "goal_text": "",
+    "selected_agent": None,
+}
 
-# ---------------------------------------------------
+for k, v in defaults.items():
+    st.session_state.setdefault(k, v)
+
+# ===================================================
+# RESET FUNCTION
+# ===================================================
+def reset_app():
+    for key in ["profile_text", "goal_text"]:
+        if key in st.session_state:
+            del st.session_state[key]
+    st.session_state.started = False
+    st.session_state.loading = False
+    st.session_state.plan = None
+    st.session_state.progress = 0
+    st.session_state.agent_step = 0
+    st.session_state.completed_agents = set()
+    st.session_state.selected_agent = None
+
+# ===================================================
 # NAVBAR
-# ---------------------------------------------------
+# ===================================================
 n1, n2, n3 = st.columns([2, 6, 2])
 
 with n1:
@@ -56,87 +99,153 @@ with n3:
 
 st.divider()
 
-# ---------------------------------------------------
+# ===================================================
 # MAIN LAYOUT
-# ---------------------------------------------------
+# ===================================================
 left, right = st.columns([1, 2.2], gap="large")
 
-# ---------------------------------------------------
-# INPUT SECTION
-# ---------------------------------------------------
+# ===================================================
+# LEFT COLUMN — INPUT + AGENTS
+# ===================================================
 with left:
+    # -------------------------------
+    # PROFILE INPUT
+    # -------------------------------
     with st.container(key="card-profile"):
-        st.subheader("Profile & Goal")
-        st.caption("Enter information to generate your plan")
+        st.subheader("Profile & Goal Input")
 
         profile = st.text_area(
             "Profile",
             placeholder="Age, lifestyle, preferences (free text)",
-            height=100,
+            height=90,
+            key="profile_text",
         )
 
         goal = st.text_input(
             "Goal",
-            placeholder="e.g. lose weight, improve stamina",
+            placeholder="e.g. weight loss, fitness",
+            key="goal_text",
         )
-
-        error = st.empty()
 
         if st.button("Generate My Plan"):
             if not goal.strip():
-                error.warning("Please enter a goal.")
+                st.warning("Please enter a goal.")
             else:
-                error.empty()
+                st.session_state.started = True
                 st.session_state.loading = True
-                st.session_state.plan = None
                 st.session_state.progress = 0
+                st.session_state.agent_step = 0
+                st.session_state.completed_agents = set()
+                st.session_state.plan = None
 
-# ---------------------------------------------------
-# AGENTS WORKING — INLINE (ONLY WHEN LOADING)
-# ---------------------------------------------------
-if st.session_state.loading:
-    st.markdown("### Generating your plan")
+    # -------------------------------
+    # AGENTS WORKING
+    # -------------------------------
+    with st.container(key="card-agents"):
+        hcol, bcol = st.columns([8, 2])
 
-    status = st.empty()
-    bar = st.progress(0)
-    agent_ui = st.empty()
+        with hcol:
+            st.subheader("Agents Working")
+            st.caption("ℹ️ Click agent icon to view its contribution")
 
-    steps = [
-        ("Analyzing profile", 30, 0),
-        ("Generating recommendations", 65, 1),
-        ("Finalizing plan", 100, 2),
-    ]
+        with bcol:
+            if st.button("", icon=":material/refresh:", help="Regenerate plan"):
+                reset_app()
+                st.rerun()
 
-    icons = ["🧠", "📋", "✅"]
+        agents = [
+            ("🧑‍⚕️", "Doctor"),
+            ("✍️", "Critic"),
+            ("✨", "Supporter"),
+            ("🎯", "Coach"),
+        ]
 
-    for text, target, idx in steps:
-        status.info(text)
-        for i in range(st.session_state.progress, target):
-            time.sleep(0.02)
-            st.session_state.progress = i
-            bar.progress(i)
+        cols = st.columns(len(agents))
 
-            row = '<div class="agent-row">'
-            for j, icon in enumerate(icons):
-                if j < idx:
-                    cls = "agent-icon completed"
-                elif j == idx:
-                    cls = "agent-icon active"
-                else:
-                    cls = "agent-icon"
-                row += f'<div class="{cls}">{icon}</div>'
-            row += "</div>"
+        for i, (icon, name) in enumerate(agents):
+            with cols[i]:
+                # Determine button state
+                disabled = st.session_state.loading or st.session_state.selected_agent is not None
+                
+                # Agent button - NATIVE st.button styled by CSS
+                clicked = st.button(
+                    icon,
+                    key=f"agent_btn_{i}",
+                    help=name,
+                    disabled=disabled
+                )
+                
+                # Handle click immediately
+                if clicked and not st.session_state.loading:
+                    st.session_state.selected_agent = name
 
-            agent_ui.markdown(row, unsafe_allow_html=True)
+        # -------------------------------
+        # STATUS + PROGRESS
+        # -------------------------------
+        status_placeholder = st.empty()
+        hint_placeholder = st.empty()
+        progress_placeholder = st.empty()
 
-    st.session_state.plan = generate_plan(
-        {"profile": profile, "goal": goal}
-    )
-    st.session_state.loading = False
+        if not st.session_state.started:
+            status_placeholder.caption("Agents are idle and ready.")
+            progress_placeholder.empty()
 
-# ---------------------------------------------------
-# OUTPUT SECTION
-# ---------------------------------------------------
+        elif st.session_state.loading:
+            status_placeholder.caption("Agents are collaborating…")
+            # progress_placeholder.progress(st.session_state.progress)
+            col1, col2 = st.columns([4, 1])
+            with col1:
+                progress_placeholder.progress(st.session_state.progress)
+            with col2:
+                st.markdown(f"**{st.session_state.progress}%**")
+
+        else:
+            progress_placeholder.empty()
+            status_placeholder.success("All agents completed successfully.")
+
+        # ===================================================
+        # DIALOG TRIGGER - SINGLE CALL AFTER LOOP
+        # ===================================================
+        if st.session_state.selected_agent and not st.session_state.loading:
+            show_agent_dialog(st.session_state.selected_agent)
+
+# ===================================================
+# GENERATION LOGIC
+# ===================================================
+if st.session_state.loading and st.session_state.selected_agent is None:
+    st.session_state.progress += 1
+    time.sleep(0.04)
+
+    p = st.session_state.progress
+
+    if p < 25:
+        st.session_state.agent_step = 0
+    elif p < 50:
+        st.session_state.agent_step = 1
+    elif p < 75:
+        st.session_state.agent_step = 2
+    else:
+        st.session_state.agent_step = 3
+
+    if p == 25:
+        st.session_state.completed_agents.add(0)
+    if p == 50:
+        st.session_state.completed_agents.add(1)
+    if p == 75:
+        st.session_state.completed_agents.add(2)
+
+    if p >= 100:
+        st.session_state.completed_agents.add(3)
+        st.session_state.plan = generate_plan(
+            {"profile": profile, "goal": goal}
+        )
+        st.session_state.loading = False
+
+    st.rerun()
+
+# ===================================================
+# RIGHT COLUMN — OUTPUT
+# ===================================================
 with right:
     with st.container(key="gradient-main"):
         st.subheader("Your Personalized Plan")
@@ -165,11 +274,11 @@ with right:
                 file_name="health_plan.txt",
             )
         else:
-            st.info("Generate a plan to see recommendations")
+            st.info("Generate a plan to see recommendations.")
 
-# ---------------------------------------------------
+# ===================================================
 # FOOTER
-# ---------------------------------------------------
+# ===================================================
 st.markdown(
     '<div class="footer">HealthAgents · Research Prototype</div>',
     unsafe_allow_html=True,
