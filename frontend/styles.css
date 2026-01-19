@@ -3,9 +3,9 @@
 =================================================== */
 .stApp {
     background:
-        radial-gradient(circle at 85% 10%, rgba(20,184,166,0.22), transparent 45%),
-        radial-gradient(circle at 10% 90%, rgba(59,130,246,0.22), transparent 45%),
-        linear-gradient(135deg, #f1faf8 0%, #e6f6f3 100%);
+        radial-gradient(circle at 85% 10%, rgba(20,184,166,0.20), transparent 45%),
+        radial-gradient(circle at 10% 90%, rgba(59,130,246,0.20), transparent 45%),
+        linear-gradient(135deg, #f4faf9 0%, #e6f6f3 100%);
     background-attachment: fixed;
 }
 
@@ -13,12 +13,13 @@ html, body {
     font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
+/* IMPORTANT: do NOT zero padding globally */
 .stContainer {
-    padding: 0 !important;
+    padding: unset !important;
 }
 
 /* ===================================================
-   NAVBAR
+   NAVBAR (TOP BAR)
 =================================================== */
 .nav-right {
     display: flex;
@@ -29,20 +30,20 @@ html, body {
 .nav-item {
     color: #64748b;
     font-weight: 500;
-    margin-left: 22px;
+    margin-left: 26px;
     cursor: pointer;
 }
 
 .nav-item:hover {
-    color: #3b82f6;
+    color: #2563eb;
 }
 
 .nav-active {
     color: #0f172a;
     font-weight: 600;
-    border-bottom: 2px solid #3b82f6;
+    border-bottom: 2px solid #2563eb;
     padding-bottom: 4px;
-    margin-left: 22px;
+    margin-left: 26px;
 }
 
 /* ===================================================
@@ -69,185 +70,86 @@ html, body {
 =================================================== */
 .st-key-card-profile,
 .st-key-card-agents {
-    background: rgba(255,255,255,0.90);
-    backdrop-filter: blur(16px);
+    background: rgba(255,255,255,0.94);
+    backdrop-filter: blur(18px);
     padding: 28px;
     border-radius: 22px;
-    box-shadow: 0 18px 44px rgba(15,118,110,0.18);
+    box-shadow: 0 18px 44px rgba(15,118,110,0.16);
     margin-bottom: 28px;
 }
 
 /* ===================================================
-   MAIN CONTENT CONTAINER
+   MAIN CONTENT CONTAINER (RIGHT)
 =================================================== */
 .st-key-gradient-main {
-    background: rgba(245,250,249,0.88);
-    backdrop-filter: blur(22px);
-    padding: 44px;
-    border-radius: 32px;
-    box-shadow: 0 40px 100px rgba(15,118,110,0.22);
+    background: rgba(248,252,251,0.95);
+    backdrop-filter: blur(24px);
+    padding: 42px;
+    border-radius: 30px;
+    box-shadow: 0 36px 90px rgba(15,118,110,0.22);
 }
 
 /* ===================================================
-   GRID & VERTICAL RHYTHM
+   AGENT BUTTONS (ROUND ICONS)
 =================================================== */
-.plan-row-1,
-.plan-row-2 {
-    display: flex;
-    gap: 24px;
-    margin-bottom: 32px;
+.st-key-card-agents button {
+    width: 25px !important;
+    height: 25px !important;
+    border-radius: 16px !important;
+
+    border: 1.5px solid #e2e8f0 !important;
+    background: #ffffff !important;
+    font-size: 22px !important;
+    color: #2563eb !important;
+    transition: all 0.2s ease;
 }
 
-.plan-row-1 > div,
-.plan-row-2 > div {
-    display: flex;
+.st-key-card-agents button:hover {
+    border-color: #2563eb !important;
+    box-shadow: 0 8px 20px rgba(37,99,235,0.18);
+    transform: translateY(-2px);
 }
 
-.plan-row-1 .st-container,
-.plan-row-2 .st-container {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    min-height: 190px;
-}
-
-/* ===================================================
-   HERO ROW — METRICS & SPLIT
-=================================================== */
-.st-key-plan-card-metrics,
-.st-key-plan-card-split {
-    background: #ffffff;
-    padding: 24px;
-    border-radius: 20px;
-    box-shadow: 0 14px 36px rgba(15,118,110,0.14);
-}
-
-.st-key-plan-card-metrics {
-    border-top: 4px solid #22c55e;
+/* Active agent highlight */
+.agent-active {
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 4px rgba(37,99,235,0.25);
 }
 
 /* ===================================================
-   SAFETY — PRIMARY VISUAL ANCHOR
-=================================================== */
-.st-key-plan-card-safety {
-    background: linear-gradient(135deg, #fff3c4, #ffe08a);
-    padding: 24px;
-    border-radius: 20px;
-    border-left: 8px solid #f59e0b;
-    box-shadow: 0 26px 60px rgba(245,158,11,0.45);
-}
-
-/* ===================================================
-   MID ROW — PROGRESSION, NUTRITION, HABITS
-=================================================== */
-.st-key-plan-card-progression,
-.st-key-plan-card-nutrition,
-.st-key-plan-card-habits {
-    background: #ffffff;
-    padding: 24px;
-    border-radius: 20px;
-    box-shadow: 0 14px 36px rgba(15,118,110,0.14);
-}
-
-.st-key-plan-card-progression li {
-    font-weight: 500;
-}
-
-/* Habits */
-.st-key-plan-card-habits {
-    background: linear-gradient(180deg, #ffffff, #f8fafc);
-}
-
-.st-key-plan-card-habits input[type="checkbox"] {
-    accent-color: #3b82f6;
-    transform: scale(1.15);
-}
-
-/* ===================================================
-   TRAINING / WORKOUT CARDS
-=================================================== */
-.st-key-plan-card-roadmap,
-.st-key-plan-card-training-guide,
-.st-key-plan-card-exercises,
-.st-key-plan-card-example {
-    background: #ffffff;
-    padding: 32px;
-    border-radius: 26px;
-    box-shadow: 0 32px 90px rgba(15,118,110,0.26);
-    margin-top: 40px;
-}
-
-/* ===================================================
-   TODAY’S MISSION
-=================================================== */
-.st-key-plan-card-today {
-    background: linear-gradient(
-        135deg,
-        rgba(59,130,246,0.26),
-        rgba(20,184,166,0.26)
-    );
-    padding: 24px;
-    border-radius: 20px;
-    border-left: 6px solid #3b82f6;
-    box-shadow: 0 22px 54px rgba(59,130,246,0.42);
-}
-
-/* ===================================================
-   EXPANDERS
-=================================================== */
-.stExpander > summary {
-    background: rgba(248,250,252,0.95);
-    border-radius: 14px;
-    padding: 12px 16px;
-    font-weight: 500;
-    cursor: pointer;
-}
-
-.stExpander > summary:hover {
-    background: rgba(226,232,240,0.9);
-}
-
-/* ===================================================
-   BUTTONS
+   BUTTONS (PRIMARY / DOWNLOAD)
 =================================================== */
 .stButton > button:not(.agent-btn) {
     background: linear-gradient(180deg, #3b82f6, #2563eb);
     color: white;
     border-radius: 999px;
-    padding: 14px 34px;
+    padding: 12px 30px;
     font-weight: 600;
     border: none;
-    box-shadow: 0 18px 44px rgba(59,130,246,0.45);
+    box-shadow: 0 18px 40px rgba(59,130,246,0.45);
 }
 
 .stButton > button:not(.agent-btn):hover {
     transform: translateY(-1px);
-    box-shadow: 0 26px 60px rgba(59,130,246,0.55);
+    box-shadow: 0 26px 56px rgba(59,130,246,0.55);
 }
 
-/* Download */
+/* Disabled buttons */
+button:disabled {
+    opacity: 0.55 !important;
+    cursor: not-allowed !important;
+    box-shadow: none !important;
+}
+
+/* Download button */
 .stDownloadButton > button {
     background: linear-gradient(180deg, #3b82f6, #2563eb);
     color: white;
     font-weight: 600;
     border-radius: 999px;
-    padding: 14px 36px;
+    padding: 12px 32px;
     box-shadow: 0 18px 42px rgba(59,130,246,0.45);
     border: none;
-}
-
-/* ===================================================
-   AGENT BUTTONS — STREAMLIT SAFE FIX
-=================================================== */
-.st-key-agent-buttons button {
-    width: 70px !important;
-    height: 70px !important;
-    border-radius: 50% !important;
-    border: 2px solid #3b82f6 !important;
-    background: white !important;
-    font-size: 28px !important;
-    color: #3b82f6 !important;
 }
 
 /* ===================================================
@@ -263,17 +165,29 @@ textarea {
 input:focus,
 textarea:focus {
     outline: none;
-    border-color: #3b82f6 !important;
-    box-shadow: 0 0 0 3px rgba(59,130,246,0.25) !important;
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.25) !important;
 }
 
 /* ===================================================
    PROGRESS BAR
 =================================================== */
 .stProgress > div > div > div {
-    background: linear-gradient(90deg, #22c55e, #3b82f6);
-    height: 12px;
+    min-height: 12px;
     border-radius: 999px;
+    background: linear-gradient(90deg, #22c55e, #3b82f6);
+}
+
+/* ===================================================
+   DIALOG / MODAL
+=================================================== */
+[data-testid="stDialog"] {
+    border-radius: 24px !important;
+    box-shadow: 0 40px 120px rgba(15,118,110,0.35) !important;
+}
+
+[data-testid="stDialog"] h3 {
+    font-weight: 600;
 }
 
 /* ===================================================
@@ -282,11 +196,6 @@ textarea:focus {
 .stAlert,
 .stSuccess {
     border-radius: 16px !important;
-}
-
-.st-key-plan-card-roadmap,
-.st-key-plan-card-today {
-    animation: fadeUp 0.4s ease-out;
 }
 
 @keyframes fadeUp {
@@ -308,4 +217,27 @@ textarea:focus {
     font-size: 13px;
     color: #64748b;
     margin-top: 48px;
+}
+
+
+
+/* ===================================================
+   REPORT TABS (PREMIUM LOOK)
+=================================================== */
+.stTabs [data-baseweb="tab"] {
+    font-weight: 600;
+    padding: 10px 18px;
+}
+
+.stTabs [aria-selected="true"] {
+    background: #e0f2fe;
+    border-radius: 12px;
+}
+
+.stTabs [data-baseweb="tab-panel"] {
+    background: white;
+    padding: 24px;
+    border-radius: 20px;
+    box-shadow: 0 18px 44px rgba(15,118,110,0.12);
+    margin-top: 16px;
 }
