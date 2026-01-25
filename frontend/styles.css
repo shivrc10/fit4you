@@ -19,50 +19,80 @@ html, body {
 }
 
 /* ===================================================
-   NAVBAR (TOP BAR)
+   HEADER / LOGO
 =================================================== */
-.nav-right {
+.app-logo {
     display: flex;
-    justify-content: flex-end;
     align-items: center;
+    gap: 10px;
 }
 
-.nav-item {
-    color: #64748b;
-    font-weight: 500;
-    margin-left: 26px;
-    cursor: pointer;
+.logo-icon {
+    font-size: 40px;
 }
 
-.nav-item:hover {
-    color: #2563eb;
-}
-
-.nav-active {
+.logo-text {
+    font-size: 40px;
+    font-weight: 700;
     color: #0f172a;
-    font-weight: 600;
-    border-bottom: 2px solid #2563eb;
-    padding-bottom: 4px;
-    margin-left: 26px;
+    letter-spacing: 0.3px;
+}
+
+.logo-tagline {
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 2px;
 }
 
 /* ===================================================
-   USER INFO
+   HEADER NAV — LINK STYLE (NO BUTTONS)
 =================================================== */
-.user-info {
-    display: flex;
-    justify-content: flex-end;
+.page-link {
+    font-size: 50px;
+    font-weight: 500;
+    color: #64748b;
+    text-decoration: none;
+    padding-bottom: 4px;
+    position: relative;
 }
 
-.user-label {
-    font-size: 11px;
-    color: #94a3b8;
+.nav-link:hover {
+    color: #0f172a;
 }
 
-.user-name {
-    font-size: 14px;
+.nav-link.active {
+    color: #0f172a;
     font-weight: 600;
-    color: #334155;
+}
+
+.nav-link.active::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -6px;
+    height: 2px;
+    background-color: #2563eb;
+    border-radius: 2px;
+}
+
+/* ===================================================
+   PRIMARY ACTION BUTTONS
+=================================================== */
+.stButton > button,
+.stDownloadButton > button {
+    background: linear-gradient(180deg, #3b82f6, #2563eb);
+    color: white;
+    border-radius: 999px;
+    padding: 12px 32px;
+    font-weight: 600;
+    border: none;
+    box-shadow: 0 18px 42px rgba(59,130,246,0.45);
+}
+
+.stButton > button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 26px 56px rgba(59,130,246,0.55);
 }
 
 /* ===================================================
@@ -79,7 +109,7 @@ html, body {
 }
 
 /* ===================================================
-   MAIN CONTENT CONTAINER (RIGHT)
+   MAIN CONTENT CONTAINER
 =================================================== */
 .st-key-gradient-main {
     background: rgba(248,252,251,0.95);
@@ -90,17 +120,16 @@ html, body {
 }
 
 /* ===================================================
-   AGENT BUTTONS (ROUND ICONS)
+   AGENT BUTTONS
 =================================================== */
 .st-key-card-agents button {
-    width: 25px !important;
-    height: 25px !important;
-    border-radius: 16px !important;
-
-    border: 1.5px solid #e2e8f0 !important;
-    background: #ffffff !important;
-    font-size: 22px !important;
-    color: #2563eb !important;
+    width: 100px ;
+    height: 25px ;
+    border-radius: 16px ;
+    border: 1.5px solid #e2e8f0;
+    background: #ffffff ;
+    font-size: 22px ;
+    color: #2563eb ;
     transition: all 0.2s ease;
 }
 
@@ -108,48 +137,6 @@ html, body {
     border-color: #2563eb !important;
     box-shadow: 0 8px 20px rgba(37,99,235,0.18);
     transform: translateY(-2px);
-}
-
-/* Active agent highlight */
-.agent-active {
-    border-color: #2563eb !important;
-    box-shadow: 0 0 0 4px rgba(37,99,235,0.25);
-}
-
-/* ===================================================
-   BUTTONS (PRIMARY / DOWNLOAD)
-=================================================== */
-.stButton > button:not(.agent-btn) {
-    background: linear-gradient(180deg, #3b82f6, #2563eb);
-    color: white;
-    border-radius: 999px;
-    padding: 12px 30px;
-    font-weight: 600;
-    border: none;
-    box-shadow: 0 18px 40px rgba(59,130,246,0.45);
-}
-
-.stButton > button:not(.agent-btn):hover {
-    transform: translateY(-1px);
-    box-shadow: 0 26px 56px rgba(59,130,246,0.55);
-}
-
-/* Disabled buttons */
-button:disabled {
-    opacity: 0.55 !important;
-    cursor: not-allowed !important;
-    box-shadow: none !important;
-}
-
-/* Download button */
-.stDownloadButton > button {
-    background: linear-gradient(180deg, #3b82f6, #2563eb);
-    color: white;
-    font-weight: 600;
-    border-radius: 999px;
-    padding: 12px 32px;
-    box-shadow: 0 18px 42px rgba(59,130,246,0.45);
-    border: none;
 }
 
 /* ===================================================
@@ -179,50 +166,15 @@ textarea:focus {
 }
 
 /* ===================================================
-   DIALOG / MODAL
+   DIALOG
 =================================================== */
 [data-testid="stDialog"] {
     border-radius: 24px !important;
     box-shadow: 0 40px 120px rgba(15,118,110,0.35) !important;
 }
 
-[data-testid="stDialog"] h3 {
-    font-weight: 600;
-}
-
 /* ===================================================
-   ALERTS & ANIMATION
-=================================================== */
-.stAlert,
-.stSuccess {
-    border-radius: 16px !important;
-}
-
-@keyframes fadeUp {
-    from {
-        opacity: 0;
-        transform: translateY(8px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* ===================================================
-   FOOTER
-=================================================== */
-.footer {
-    text-align: center;
-    font-size: 13px;
-    color: #64748b;
-    margin-top: 48px;
-}
-
-
-
-/* ===================================================
-   REPORT TABS (PREMIUM LOOK)
+   REPORT TABS
 =================================================== */
 .stTabs [data-baseweb="tab"] {
     font-weight: 600;
@@ -241,3 +193,31 @@ textarea:focus {
     box-shadow: 0 18px 44px rgba(15,118,110,0.12);
     margin-top: 16px;
 }
+
+/* ===================================================
+   FOOTER
+=================================================== */
+.footer {
+    text-align: center;
+    font-size: 13px;
+    color: #64748b;
+    margin-top: 48px;
+}
+
+/* ===================================================
+   HIDE STREAMLIT CHROME
+=================================================== */
+[data-testid="stSidebar"] {
+    display: none;
+}
+
+button[kind="header"] {
+    display: none;
+}
+
+header {
+    visibility: hidden;
+    height: 0px;
+}
+
+

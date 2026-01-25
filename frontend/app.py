@@ -13,15 +13,47 @@ from plan_parser import parse_plan_into_weeks
 from report_layout import render_report
 
 # ===================================================
-# PAGE CONFIG
+# PAGE CONFIG - MUST BE FIRST
 # ===================================================
-st.set_page_config(page_title="HealthAgents", layout="wide")
+st.set_page_config(
+    page_title="FIT4YOU – My Plan", layout="wide", initial_sidebar_state="collapsed"
+)
 
 # ===================================================
-# LOAD CSS
+# LOAD CSS FIRST
 # ===================================================
-with open("styles.css") as f:
-    st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+try:
+    with open("styles.css") as f:
+        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+except FileNotFoundError:
+    pass
+
+
+logo_col, spacer, nav1, nav2, nav3 = st.columns([2.2, 6.0, 1.0, 1.0, 1.0])
+
+with logo_col:
+    st.markdown(
+        """
+        <div class="app-logo">
+            <span class="logo-icon">🩺</span>
+            <span class="logo-text">FIT4YOU</span>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.caption("Where multiple perspectives shape safer fitness decisions")
+
+with nav1:
+    st.page_link("app.py", label="My Plan")
+
+with nav2:
+    st.page_link("pages/work.py", label="How it works")
+
+with nav3:
+    st.page_link("pages/about.py", label="About")
+
+st.divider()
+
 
 # ===================================================
 # SESSION STATE
@@ -38,32 +70,53 @@ DEFAULT_STATE = {
 for k, v in DEFAULT_STATE.items():
     st.session_state.setdefault(k, v)
 
-# ===================================================
-# RESET
-# ===================================================
+
 def reset_app():
     for k, v in DEFAULT_STATE.items():
         st.session_state[k] = v
     st.rerun()
 
+
 # ===================================================
 # AGENT DIALOG
 # ===================================================
+
+
 @st.dialog("Agent details")
 def show_agent_dialog(agent_name: str):
     explanations = {
         "Doctor": "Reviews real PubMed evidence and identifies medical risks.",
         "Critic": "Challenges weak evidence and highlights limitations.",
         "Supporter": "Balances critique with realistic encouragement.",
-        "Coach": "Creates your final personalized action plan."
+        # "Coach": "Creates your final personalized action plan.",
+        "Summary": "Condenses the multi-agent debate into a neutral overview.",
     }
 
-    st.markdown(f"### {agent_name}")
-    st.markdown(explanations.get(agent_name, ""))
+    st.markdown(f"## {agent_name}")
+    st.caption(explanations.get(agent_name, ""))
 
-    if st.button("Close"):
+    agent_data = st.session_state.agent_outputs.get(agent_name)
+
+    st.divider()
+
+    if agent_data:
+        st.markdown("### Agent contribution")
+        st.markdown(agent_data.get("content", "_No content available._"))
+
+        if agent_name == "Doctor" and agent_data.get("sources"):
+            st.divider()
+            st.markdown("### Evidence sources")
+            for pmid in agent_data["sources"]:
+                st.markdown(f"- `{pmid}`")
+    else:
+        st.warning("No output available for this agent.")
+
+    st.divider()
+
+    if st.button("Close", use_container_width=True):
         st.session_state.selected_agent = None
         st.rerun()
+
 
 # ===================================================
 # PDF GENERATOR
@@ -101,29 +154,20 @@ def generate_pdf(goal: str, structured_plan: dict) -> bytes:
     buffer.seek(0)
     return buffer.read()
 
+
 # ===================================================
 # HEADER
-# ===================================================
-st.markdown("""
-<div class="nav-right">
-    <span class="nav-active">My Plan</span>
-    <span class="nav-item">How it works</span>
-    <span class="nav-item">About</span>
-</div>
-""", unsafe_allow_html=True)
-
-st.markdown("## 🩺 FIT4YOU ")
-st.caption("Where multiple perspectives shape safer fitness decisions")
-st.divider()
+# # ===================================================
+# st.markdown("## 🩺 FIT4YOU")
+# st.caption("Where multiple perspectives shape safer fitness decisions")
+# st.divider()
 
 # ===================================================
 # LAYOUT
 # ===================================================
 left, right = st.columns([1, 2.2], gap="large")
 
-# ===================================================
 # LEFT COLUMN
-# ===================================================
 with left:
     with st.container(key="card-profile"):
         st.subheader("👤 Profile & Goal")
@@ -131,15 +175,15 @@ with left:
         st.session_state.profile = st.text_area(
             "Profile",
             value=st.session_state.profile,
-            height=120
+            height=120,
         )
 
         st.session_state.goal = st.text_input(
             "Goal",
-            value=st.session_state.goal
+            value=st.session_state.goal,
         )
 
-        if st.button("🚀 Generate Plan", type="primary"):
+        if st.button("Generate Plan", type="primary"):
             st.session_state.loading = True
             st.session_state.progress = 0
             st.session_state.result = None
@@ -147,9 +191,6 @@ with left:
             st.rerun()
 
     with st.container(key="card-agents"):
-        # --------------------------------------------
-        # HEADER
-        # --------------------------------------------
         h_l, h_r = st.columns([6, 1])
 
         with h_l:
@@ -160,11 +201,8 @@ with left:
             if st.button("", icon=":material/refresh:", help="Reset"):
                 reset_app()
 
-        # --------------------------------------------
-        # AGENT ICONS
-        # --------------------------------------------
-        agents = ["Doctor", "Critic", "Supporter", "Coach"]
-        icons = ["🧑‍⚕️", "✍️", "✨", "🎯"]
+        agents = ["Doctor", "Critic", "Supporter", "Summarizer"]
+        icons = [" 🧑‍⚕️ ", " ✍️ ", " ✨ ", " 🧾 "]
 
         cols = st.columns(4)
         for i, (icon, name) in enumerate(zip(icons, agents)):
@@ -172,60 +210,48 @@ with left:
                 if st.button(
                     icon,
                     key=f"agent_{i}",
-                    # help = f"agent_{i}",
-                    disabled=st.session_state.loading
-                    
+                    disabled=st.session_state.loading,
+                    help=name,
                 ):
                     st.session_state.selected_agent = name
 
-        # --------------------------------------------
-        # STATUS + PROGRESS (DYNAMIC)
-        # --------------------------------------------
         status_placeholder = st.empty()
         progress_placeholder = st.empty()
 
         if not st.session_state.loading and st.session_state.result is None:
             status_placeholder.caption("Agents are idle and ready.")
-            progress_placeholder.empty()
-
         elif st.session_state.loading:
             status_placeholder.caption("Agents are collaborating…")
-
             col1, col2 = st.columns([4, 1])
             with col1:
                 progress_placeholder.progress(st.session_state.progress)
             with col2:
                 st.markdown(f"**{st.session_state.progress}%**")
-
         else:
-            progress_placeholder.empty()
             status_placeholder.success("All agents completed successfully.")
 
-        # --------------------------------------------
-        # AGENT DIALOG TRIGGER (IMPORTANT)
-        # --------------------------------------------
         if st.session_state.selected_agent and not st.session_state.loading:
             show_agent_dialog(st.session_state.selected_agent)
 
-# ===================================================
-# PROGRESS LOOP (SIMULATED BUT SMOOTH)
-# ===================================================
+# PROGRESS LOOP
 if st.session_state.loading and st.session_state.result is None:
     st.session_state.progress = min(st.session_state.progress + 2, 98)
 
     if st.session_state.progress >= 98:
         st.session_state.result = run_pipeline(
             st.session_state.profile,
-            st.session_state.goal
+            st.session_state.goal,
         )
+        st.session_state.agent_outputs = {
+            item["agent"]: item for item in st.session_state.result.get("agents", [])
+        }
+
         st.session_state.progress = 100
         st.session_state.loading = False
 
     st.rerun()
 
-# ===================================================
 # RIGHT COLUMN — REPORT
-# ===================================================
 with right:
     with st.container(key="gradient-main"):
         header_l, header_r = st.columns([4, 1])
@@ -240,21 +266,18 @@ with right:
             with header_r:
                 pdf = generate_pdf(st.session_state.goal, structured)
                 st.download_button(
-                    "⬇️ Download PDF",
+                    "Download PDF",
                     pdf,
                     "health_report.pdf",
-                    "application/pdf"
+                    "application/pdf",
                 )
 
             render_report(st.session_state.goal, structured)
-
         else:
-            st.info("👈 Enter your profile & goal to generate a plan")
+            st.info("Enter your profile & goal to generate a plan")
 
-# ===================================================
 # FOOTER
-# ===================================================
 st.markdown(
     '<div class="footer">Powered by Multi-Agent AI • PubMed-backed Evidence</div>',
-    unsafe_allow_html=True
+    unsafe_allow_html=True,
 )
