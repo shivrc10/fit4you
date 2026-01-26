@@ -16,6 +16,8 @@ from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 from textwrap import wrap
 
+import re
+
 console = Console()
 
 DEV_MODE = True
@@ -116,6 +118,8 @@ class AgentState(TypedDict):
 # ================================
 # 4. Doctor Node
 # ================================
+
+
 def doctor_node(state: AgentState):
     results = collection.query(
         query_texts=[state['user_question'] + " fitness exercise health impact"],
@@ -214,20 +218,208 @@ Output ONLY the summary bullets, no intro/outro.
             break
    
     if choice == "y":
-        return {"evidence_complete": True}
+        return {
+            "evidence_complete": True,
+            "summary": summary_text
+        }
     else:
         console.print("[yellow]Regenerating evidence debate...[/yellow]\n")
         return {"thoughts": [], "evidence_complete": False}  # Reset for regeneration
+    
+    
+    
+
+def hallucination_score(
+    agent: str,
+    text: str,
+    doctor_text: str,
+    summary_text: str,
+    evidence_vocab: set
+) -> float:
+    """
+    Independent hallucination score per agent
+    """
+
+    tokens = tokenize(text)
+    claim_tokens = [t for t in tokens if t in CLAIM_KEYWORDS]
+
+    # No claims → no hallucination
+    if not claim_tokens:
+        return 0.0
+
+    # --- Doctor ---
+    if agent == "Doctor":
+        unsupported = [t for t in claim_tokens if t not in evidence_vocab]
+        return len(unsupported) / len(claim_tokens)
+
+    # --- Summary ---
+    if agent == "Summary":
+        doctor_vocab = set(tokenize(doctor_text))
+        unsupported = [t for t in claim_tokens if t not in doctor_vocab]
+        return len(unsupported) / len(claim_tokens)
+
+    # --- Critic ---
+    if agent == "Critic":
+        # Critic should not assert facts at all
+        return len(claim_tokens) / len(tokens)
+
+    # --- Supporter ---
+    if agent == "Supporter":
+        # Supporter should not assert facts
+        return len(claim_tokens) / len(tokens)
+
+    # --- Coach ---
+    if agent == "Coach":
+        unsupported = [t for t in claim_tokens if t not in evidence_vocab]
+        return len(unsupported) / len(claim_tokens)
+
+    return 0.0
+def compute_independent_hallucination_scores(thoughts, summary_text=""):
+    scores = {}
+
+    doctor_text = next(
+        (t["content"] for t in thoughts if t["agent"] == "Doctor"),
+        ""
+    )
+
+    evidence_vocab = extract_evidence_vocab(thoughts, summary_text)
+
+    for t in thoughts:
+        agent = t["agent"]
+        text = t["content"]
+
+        score = hallucination_score(
+            agent=agent,
+            text=text,
+            doctor_text=doctor_text,
+            summary_text=summary_text,
+            evidence_vocab=evidence_vocab
+        )
+
+        scores[agent] = round(score, 3)
+
+    return scores
+
+
+ROLE_INSTRUCTIONS = {
+    "Doctor": {
+        "required": [
+            "pmid", "study", "evidence", "clinical", "risk"
+        ],
+        "forbidden": [
+            "week", "schedule", "sets", "reps", "routine", "habit"
+        ]
+    },
+    "Critic": {
+        "required": [
+            "bias", "limitation", "sample", "confound", "overgeneral"
+        ],
+        "forbidden": [
+            "recommend", "plan", "should do", "workout", "diet"
+        ]
+    },
+    "Supporter": {
+        "required": [
+            "encourag", "positive", "realistic", "support"
+        ],
+        "forbidden": [
+            "study", "pmid", "risk", "clinical", "trial"
+        ]
+    },
+    "Summary": {
+        "required": [
+            "pros", "cons", "evidence", "strength"
+        ],
+        "forbidden": [
+            "recommend", "plan", "schedule", "should"
+        ]
+    },
+    "Coach": {
+        "required": [
+            "week", "schedule", "progress", "habit", "plan"
+        ],
+        "forbidden": [
+            "pmid", "study", "clinical", "trial", "meta-analysis"
+        ]
+    }
+}
+
+
+def prompt_adherence_score(agent: str, text: str) -> float:
+    """
+    Measures how well the agent followed its role instructions.
+    Score ∈ [0, 1]
+    """
+    if agent not in ROLE_INSTRUCTIONS or not text:
+        return 0.0
+
+    rules = ROLE_INSTRUCTIONS[agent]
+    text_l = text.lower()
+
+    # Required signals
+    required_hits = sum(
+        1 for kw in rules["required"] if kw in text_l
+    )
+    required_score = required_hits / max(len(rules["required"]), 1)
+
+    # Forbidden signals
+    forbidden_hits = sum(
+        1 for kw in rules["forbidden"] if kw in text_l
+    )
+    forbidden_penalty = forbidden_hits / max(len(rules["forbidden"]), 1)
+
+    # Final adherence score
+    score = required_score * (1 - forbidden_penalty)
+
+    return round(max(0.0, min(score, 1.0)), 3)
+
+def instruction_drift_rate(adherence_score: float) -> float:
+    """
+    Drift = how much the agent deviated from instructions
+    """
+    return round(1.0 - adherence_score, 3)
+
+
+def compute_prompt_adherence_scores(thoughts):
+    adherence = {}
+    drift = {}
+
+    for t in thoughts:
+        agent = t["agent"]
+        text = t["content"]
+
+        pas = prompt_adherence_score(agent, text)
+        idr = instruction_drift_rate(pas)
+
+        adherence[agent] = pas
+        drift[agent] = idr
+
+    return adherence, drift
+
+
 
 # ================================
 # 8. Coach Node
 # ================================
 def coach_node(state: AgentState):
+
+    # 🔒 HARD SAFETY GATE
+    # if not state.get("user_agreed", False):
+    #     raise RuntimeError(
+    #         "Coach node invoked without explicit user consent"
+    #     )
+
+    # debate = json.dumps(
+    #     [{"agent": t["agent"], "text": t["content"][:1000]} for t in state["thoughts"]],
+    #     indent=2
+    # )
+    
     debate = json.dumps(
         [{"agent": t["agent"], "text": t["content"][:1000]} for t in state["thoughts"]],
         indent=2
     )
-
+    
+    
     prompt = f"""You are Coach — the practical expert.
 Full debate with REAL PubMed evidence:
 {debate}
@@ -247,16 +439,72 @@ Include:
     resp = coach_llm.invoke(prompt)
     plan_text = resp.content
 
-    console.print(Panel(plan_text, title="[bold yellow]Coach (YOU) – Final Plan[/bold yellow]", border_style="yellow"))
+    state.setdefault("eval", {})
 
+    # =========================
+    # Hallucination Evaluation
+    # =========================
+    evidence_vocab = extract_evidence_vocab(state["thoughts"])
+    
+    doctor_text = next(
+    (t["content"] for t in state["thoughts"] if t["agent"] == "Doctor"),
+    ""
+    )
+
+    hall_rate = hallucination_score(
+        agent="Coach",
+        text=plan_text,
+        doctor_text=doctor_text,
+        summary_text=state.get("summary", ""),
+        evidence_vocab=evidence_vocab
+    )
+
+    state["eval"]["hallucination_rate"] = round(hall_rate, 3)
+
+    # =========================
+    # LLM-as-Judge
+    # =========================
     judge_scores = llm_as_judge(
         profile=state["user_profile"],
         goal=state["user_question"],
         output=plan_text
     )
 
-    state.setdefault("eval", {})
     state["eval"]["LLM_Judge"] = judge_scores
+
+    # =========================
+    # Quality gates
+    # =========================
+    if (not DEV_MODE) and (
+        judge_scores.get("safety", 1) < 4
+        or judge_scores.get("overall", 1) < 3
+        or hall_rate > 0.30
+    ):
+        console.print("[red]❌ Plan rejected by quality gate[/red]")
+        return {
+            "thoughts": state["thoughts"],
+            "final_answer": "",
+            "eval": state["eval"]
+        }
+
+    # =========================
+    # Accept path
+    # =========================
+    console.print(
+        Panel(
+            f"Hallucination Rate: {hall_rate:.2%}",
+            title="[bold red]Hallucination Evaluation[/bold red]",
+            border_style="red"
+        )
+    )
+
+    console.print(
+        Panel(
+            plan_text,
+            title="[bold yellow]Coach (YOU) – Final Plan[/bold yellow]",
+            border_style="yellow"
+        )
+    )
 
     console.print(
         Panel(
@@ -266,16 +514,6 @@ Include:
         )
     )
 
-    # ✅ Reject ONLY if DEV_MODE is False AND scores fail
-    if (not DEV_MODE) and (judge_scores.get("safety", 1) < 4 or judge_scores.get("overall", 1) < 3):
-        console.print("[red]❌ Plan rejected by quality gate[/red]")
-        return {
-            "thoughts": state["thoughts"],
-            "final_answer": "",
-            "eval": state["eval"]
-        }
-
-    # ✅ Accept path
     thought = {
         "id": len(state["thoughts"]) + 1,
         "agent": "Coach",
@@ -287,6 +525,7 @@ Include:
         "final_answer": plan_text,
         "eval": state["eval"]
     }
+
 
 # ================================
 # 9. Build Graph-of-Thoughts
@@ -458,6 +697,195 @@ def role_adherence_score(agent_output: str, role: str) -> float:
 
 
 # ================================
+# Evaluation block
+# ================================
+STOPWORDS = set([
+    "the","and","to","of","in","a","is","for","on","with","as","by",
+    "that","this","it","are","be","or","an","at","from","if","can",
+    "will","may","should","you","your"
+])
+
+def tokenize(text: str):
+    if not text:
+        return []
+    words = re.findall(r"\b[a-zA-Z]{3,}\b", text.lower())
+    return [w for w in words if w not in STOPWORDS]
+
+# ================================
+# Claim-aware Hallucination Metric
+# ================================
+
+CLAIM_KEYWORDS = {
+    "risk", "risks", "increase", "increases", "decrease", "decreases",
+    "improve", "improves", "reduce", "reduces",
+    "prevent", "prevents", "cause", "causes",
+    "associated", "association", "linked", "leads",
+    "evidence", "study", "studies", "clinical",
+    "trial", "meta-analysis", "significant", "effect", "effects"
+}
+
+ROLE_VIOLATIONS = {
+    "Doctor": [
+        "workout", "training plan", "exercise routine", "sets", "reps",
+        "nutrition plan", "meal plan", "diet schedule"
+    ],
+    "Critic": [
+        "study", "studies", "evidence", "pmid", "clinical",
+        "risk", "increase", "decrease", "effect"
+    ],
+    "Supporter": [
+        "study", "studies", "evidence", "pmid", "clinical",
+        "risk", "increase", "decrease", "effect"
+    ],
+    "Summary": [
+        "new study", "additional evidence", "research shows",
+        "clinical trial", "meta-analysis"
+    ],
+    "Coach": [
+        "study", "studies", "evidence", "pmid", "clinical trial",
+        "meta-analysis", "research shows"
+    ]
+}
+
+def violation_rate(agent: str, text: str) -> float:
+    """
+    Measures explicit forbidden instruction violations per agent.
+    Independent of hallucination and prompt adherence.
+    """
+
+    if not text or agent not in ROLE_VIOLATIONS:
+        return 0.0
+
+    text_l = text.lower()
+    forbidden = ROLE_VIOLATIONS[agent]
+
+    # Count violations
+    violations = sum(1 for kw in forbidden if kw in text_l)
+
+    tokens = tokenize(text)
+
+    # Normalize to avoid verbosity bias
+    return round(violations / max(len(tokens), 1), 3)
+
+def compute_violation_rates(thoughts):
+    rates = {}
+
+    for t in thoughts:
+        agent = t["agent"]
+        text = t["content"]
+
+        rate = violation_rate(agent, text)
+        rates[agent] = rate
+
+    return rates
+
+
+
+def hallucination_score(
+    agent: str,
+    text: str,
+    doctor_text: str,
+    summary_text: str,
+    evidence_vocab: set
+) -> float:
+    """
+    Independent, role-aware hallucination score
+    """
+
+    tokens = tokenize(text)
+    claim_tokens = [t for t in tokens if t in CLAIM_KEYWORDS]
+
+    # No factual claims → no hallucination
+    if not claim_tokens:
+        return 0.0
+
+    # Doctor must be fully evidence-grounded
+    if agent == "Doctor":
+        unsupported = [t for t in claim_tokens if t not in evidence_vocab]
+        return len(unsupported) / len(claim_tokens)
+
+    # Summary must not introduce new claims
+    if agent == "Summary":
+        doctor_vocab = set(tokenize(doctor_text))
+        unsupported = [t for t in claim_tokens if t not in doctor_vocab]
+        return len(unsupported) / len(claim_tokens)
+
+    # Critic should not assert facts at all
+    if agent == "Critic":
+        return len(claim_tokens) / len(tokens)
+
+    # Supporter should not assert facts
+    if agent == "Supporter":
+        return len(claim_tokens) / len(tokens)
+
+    # Coach may act, but claims must be grounded
+    if agent == "Coach":
+        unsupported = [t for t in claim_tokens if t not in evidence_vocab]
+        return len(unsupported) / len(claim_tokens)
+
+    return 0.0
+
+
+def compute_independent_hallucination_scores(thoughts, summary_text=""):
+    scores = {}
+
+    doctor_text = next(
+        (t["content"] for t in thoughts if t["agent"] == "Doctor"),
+        ""
+    )
+
+    evidence_vocab = extract_evidence_vocab(thoughts, summary_text)
+
+    for t in thoughts:
+        agent = t["agent"]
+        text = t["content"]
+
+        score = hallucination_score(
+            agent=agent,
+            text=text,
+            doctor_text=doctor_text,
+            summary_text=summary_text,
+            evidence_vocab=evidence_vocab
+        )
+
+        scores[agent] = round(score, 3)
+
+    return scores
+
+
+def extract_evidence_vocab(thoughts, summary_text: str = ""):
+    """
+    Evidence vocabulary = Doctor outputs + approved Summary text
+    """
+    evidence_text = ""
+
+    for t in thoughts:
+        if t.get("agent") == "Doctor":
+            evidence_text += " " + t.get("content", "")
+
+    if summary_text:
+        evidence_text += " " + summary_text
+
+    return set(tokenize(evidence_text))
+
+
+
+
+# ================================
+# Claim-aware Hallucination Metric
+# ================================
+
+CLAIM_KEYWORDS = {
+    "risk", "risks", "increase", "increases", "decrease", "decreases",
+    "improve", "improves", "reduce", "reduces",
+    "prevent", "prevents", "cause", "causes",
+    "associated", "association", "linked", "leads",
+    "evidence", "study", "studies", "clinical",
+    "trial", "meta-analysis", "significant", "effect", "effects"
+}
+
+
+# ================================
 # 12. Main interactive loop
 # ================================
 if __name__ == "__main__":
@@ -465,6 +893,7 @@ if __name__ == "__main__":
         "Multi-Agent Fitness Advisor\nFULL 272k PubMed + Real Citations + Groq LLMs + Summary Decision",
         title="READY", style="bold magenta"
     ))
+
 
     profile = input("\nEnter your profile (e.g., 42yo male, 88kg, bad knees, desk job): ")
     goal = input("What is your Goal? (e.g., lose fat and get strong without joint pain): ")
@@ -490,6 +919,22 @@ if __name__ == "__main__":
 
     # ✅ 3. Generate PDF AFTER graph finishes
     if final_state and final_state.get("final_answer"):
+        
+        # =========================
+        # Independent Hallucination Evaluation
+        # =========================
+        hallucination_scores = compute_independent_hallucination_scores(
+            final_state["thoughts"],
+            final_state.get("summary", "")
+        )
+
+        final_state.setdefault("eval", {})
+        final_state["eval"]["hallucination_by_agent"] = hallucination_scores
+
+        console.print("\n[bold red]Hallucination Scores for respective agents[/bold red]")
+        for agent, score in hallucination_scores.items():
+            console.print(f"{agent}: {score:.2f}")
+
         plan_text = final_state["final_answer"]
         
         role_scores = {}
@@ -505,6 +950,40 @@ if __name__ == "__main__":
             console.print(f"{role}: {score:.2f}")
 
         console.print(f"[bold]Overall Role Adherence:[/bold] {overall_role_adherence:.2f}")
+        
+        
+        # =========================
+        # Prompt Adherence Evaluation
+        # =========================
+        adherence_scores, drift_scores = compute_prompt_adherence_scores(
+            final_state["thoughts"]
+        )
+
+        final_state.setdefault("eval", {})
+        final_state["eval"]["prompt_adherence"] = adherence_scores
+        final_state["eval"]["instruction_drift"] = drift_scores
+
+        console.print("\n[bold green]Prompt Adherence Scores[/bold green]")
+        for agent, score in adherence_scores.items():
+            console.print(f"{agent}: {score:.2f}")
+
+        console.print("\n[bold yellow]Instruction Drift Rates[/bold yellow]")
+        for agent, score in drift_scores.items():
+            console.print(f"{agent}: {score:.2f}")
+            
+        
+        # =========================
+        # Violation Rate Evaluation
+        # =========================
+        violation_scores = compute_violation_rates(final_state["thoughts"])
+
+        final_state.setdefault("eval", {})
+        final_state["eval"]["violation_rate_by_agent"] = violation_scores
+
+        console.print("\n[bold red]Instruction Violation Rates[/bold red]")
+        for agent, score in violation_scores.items():
+            console.print(f"{agent}: {score:.3f}")
+
         
         os.makedirs("outputs/evaluation", exist_ok=True)
         with open("outputs/evaluation/role_adherence.json", "a") as f:

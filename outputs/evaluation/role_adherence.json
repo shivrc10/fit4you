@@ -1,2 +1,26 @@
 {"role_scores": {"Doctor": 0.5, "Critic": 0.8, "Supporter": 0.8, "Coach": 0.6666666666666666}, "overall": 0.6916666666666667}
 {"role_scores": {"Doctor": 0.8333333333333334, "Critic": 0.4, "Supporter": 0.6, "Coach": 1.0}, "overall": 0.7083333333333334}
+<<<<<<< HEAD
+=======
+{"role_scores": {"Doctor": 0.5, "Critic": 0.4, "Supporter": 0.6, "Coach": 0.3333333333333333}, "overall": 0.4583333333333333}
+>>>>>>> 204c6bdb672f37897bad6d69d0635d4bdbfd5968
+{"role_scores": {"Doctor": 0.3333333333333333, "Critic": 0.4, "Supporter": 0.6, "Coach": 0.8333333333333334}, "overall": 0.5416666666666667}
+{"role_scores": {"Doctor": 0.6666666666666666, "Critic": 1.0, "Supporter": 0.4, "Coach": 0.5}, "overall": 0.6416666666666666}
+{"role_scores": {"Doctor": 0.6666666666666666, "Critic": 0.8, "Supporter": 0.4, "Coach": 0.6666666666666666}, "overall": 0.6333333333333333}
+{"role_scores": {"Doctor": 0.6666666666666666, "Critic": 1.0, "Supporter": 0.2, "Coach": 0.5}, "overall": 0.5916666666666666}
+{"role_scores": {"Doctor": 0.16666666666666666, "Critic": 0.8, "Supporter": 0.4, "Coach": 0.5}, "overall": 0.4666666666666667}
+{"role_scores": {"Doctor": 0.6666666666666666, "Critic": 0.6, "Supporter": 0.2, "Coach": 0.5}, "overall": 0.49166666666666664}
+{"role_scores": {"Doctor": 0.6666666666666666, "Critic": 0.6, "Supporter": 0.4, "Coach": 0.8333333333333334}, "overall": 0.625}
+{"role_scores": {"Doctor": 0.5, "Critic": 0.4, "Supporter": 0.4, "Coach": 1.0}, "overall": 0.575}
+{"role_scores": {"Doctor": 0.6666666666666666, "Critic": 0.2, "Supporter": 0.4, "Coach": 0.6666666666666666}, "overall": 0.4833333333333333}
+{"role_scores": {"Doctor": 0.8333333333333334, "Critic": 0.2, "Supporter": 0.2, "Coach": 0.5}, "overall": 0.43333333333333335}
+{"role_scores": {"Doctor": 0.6666666666666666, "Critic": 0.6, "Supporter": 0.4, "Coach": 0.6666666666666666}, "overall": 0.5833333333333333}
+{"role_scores": {"Doctor": 0.8333333333333334, "Critic": 0.4, "Supporter": 0.6, "Coach": 0.8333333333333334}, "overall": 0.6666666666666667}
+{"role_scores": {"Doctor": 0.6666666666666666, "Critic": 0.8, "Supporter": 0.0, "Coach": 0.8333333333333334}, "overall": 0.5750000000000001}
+{"role_scores": {"Doctor": 0.5, "Critic": 0.8, "Supporter": 0.4, "Coach": 0.6666666666666666}, "overall": 0.5916666666666667}
+{"role_scores": {"Doctor": 0.6666666666666666, "Critic": 0.8, "Supporter": 0.2, "Coach": 0.5}, "overall": 0.5416666666666667}
+{"role_scores": {"Doctor": 0.8333333333333334, "Critic": 0.6, "Supporter": 0.6, "Coach": 0.8333333333333334}, "overall": 0.7166666666666667}
+{"role_scores": {"Doctor": 0.6666666666666666, "Critic": 1.0, "Supporter": 0.6, "Coach": 0.8333333333333334}, "overall": 0.775}
+{"role_scores": {"Doctor": 0.3333333333333333, "Critic": 0.8, "Supporter": 0.4, "Coach": 0.6666666666666666}, "overall": 0.5499999999999999}
+{"role_scores": {"Doctor": 0.8333333333333334, "Critic": 0.8, "Supporter": 0.2, "Coach": 0.5}, "overall": 0.5833333333333333}
+{"role_scores": {"Doctor": 0.6666666666666666, "Critic": 1.0, "Supporter": 0.6, "Coach": 0.3333333333333333}, "overall": 0.65}

@@ -254,7 +254,11 @@ Include:
 • Nutrition timing
 • Habit system
 • 2 questions at the end
+<<<<<<< HEAD
 🧡 COACH’S ACTION PLAN
+=======
+COACH’S ACTION PLAN
+>>>>>>> 204c6bdb672f37897bad6d69d0635d4bdbfd5968
 """
    
     resp = coach_llm.invoke(prompt)
@@ -305,7 +309,11 @@ if __name__ == "__main__":
     cursor.execute("""INSERT INTO sessions (session_id, user_profile, user_goal) VALUES (%s, %s, %s)""", (SESSION_ID, profile, goal))
     db.commit()
 
+<<<<<<< HEAD
     print(f"🔵 Session Started → {SESSION_ID}")
+=======
+    print(f"Session Started → {SESSION_ID}")
+>>>>>>> 204c6bdb672f37897bad6d69d0635d4bdbfd5968
 
     console.print("\n[bold]Starting evidence-based debate with real PubMed studies...[/bold]\n")
    

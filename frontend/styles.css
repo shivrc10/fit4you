@@ -1,0 +1,223 @@
+/* ===================================================
+   GLOBAL BACKGROUND & TYPOGRAPHY
+=================================================== */
+.stApp {
+    background:
+        radial-gradient(circle at 85% 10%, rgba(20,184,166,0.20), transparent 45%),
+        radial-gradient(circle at 10% 90%, rgba(59,130,246,0.20), transparent 45%),
+        linear-gradient(135deg, #f4faf9 0%, #e6f6f3 100%);
+    background-attachment: fixed;
+}
+
+html, body {
+    font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* IMPORTANT: do NOT zero padding globally */
+.stContainer {
+    padding: unset !important;
+}
+
+/* ===================================================
+   HEADER / LOGO
+=================================================== */
+.app-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.logo-icon {
+    font-size: 40px;
+}
+
+.logo-text {
+    font-size: 40px;
+    font-weight: 700;
+    color: #0f172a;
+    letter-spacing: 0.3px;
+}
+
+.logo-tagline {
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 2px;
+}
+
+/* ===================================================
+   HEADER NAV — LINK STYLE (NO BUTTONS)
+=================================================== */
+.page-link {
+    font-size: 50px;
+    font-weight: 500;
+    color: #64748b;
+    text-decoration: none;
+    padding-bottom: 4px;
+    position: relative;
+}
+
+.nav-link:hover {
+    color: #0f172a;
+}
+
+.nav-link.active {
+    color: #0f172a;
+    font-weight: 600;
+}
+
+.nav-link.active::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -6px;
+    height: 2px;
+    background-color: #2563eb;
+    border-radius: 2px;
+}
+
+/* ===================================================
+   PRIMARY ACTION BUTTONS
+=================================================== */
+.stButton > button,
+.stDownloadButton > button {
+    background: linear-gradient(180deg, #3b82f6, #2563eb);
+    color: white;
+    border-radius: 999px;
+    padding: 12px 32px;
+    font-weight: 600;
+    border: none;
+    box-shadow: 0 18px 42px rgba(59,130,246,0.45);
+}
+
+.stButton > button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 26px 56px rgba(59,130,246,0.55);
+}
+
+/* ===================================================
+   LEFT COLUMN — GLASS CARDS
+=================================================== */
+.st-key-card-profile,
+.st-key-card-agents {
+    background: rgba(255,255,255,0.94);
+    backdrop-filter: blur(18px);
+    padding: 28px;
+    border-radius: 22px;
+    box-shadow: 0 18px 44px rgba(15,118,110,0.16);
+    margin-bottom: 28px;
+}
+
+/* ===================================================
+   MAIN CONTENT CONTAINER
+=================================================== */
+.st-key-gradient-main {
+    background: rgba(248,252,251,0.95);
+    backdrop-filter: blur(24px);
+    padding: 42px;
+    border-radius: 30px;
+    box-shadow: 0 36px 90px rgba(15,118,110,0.22);
+}
+
+/* ===================================================
+   AGENT BUTTONS
+=================================================== */
+.st-key-card-agents button {
+    width: 100px ;
+    height: 25px ;
+    border-radius: 16px ;
+    border: 1.5px solid #e2e8f0;
+    background: #ffffff ;
+    font-size: 22px ;
+    color: #2563eb ;
+    transition: all 0.2s ease;
+}
+
+.st-key-card-agents button:hover {
+    border-color: #2563eb !important;
+    box-shadow: 0 8px 20px rgba(37,99,235,0.18);
+    transform: translateY(-2px);
+}
+
+/* ===================================================
+   INPUTS
+=================================================== */
+input,
+textarea {
+    border-radius: 14px !important;
+    padding: 12px 14px !important;
+    border: 1px solid #cbd5e1 !important;
+}
+
+input:focus,
+textarea:focus {
+    outline: none;
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.25) !important;
+}
+
+/* ===================================================
+   PROGRESS BAR
+=================================================== */
+.stProgress > div > div > div {
+    min-height: 12px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #22c55e, #3b82f6);
+}
+
+/* ===================================================
+   DIALOG
+=================================================== */
+[data-testid="stDialog"] {
+    border-radius: 24px !important;
+    box-shadow: 0 40px 120px rgba(15,118,110,0.35) !important;
+}
+
+/* ===================================================
+   REPORT TABS
+=================================================== */
+.stTabs [data-baseweb="tab"] {
+    font-weight: 600;
+    padding: 10px 18px;
+}
+
+.stTabs [aria-selected="true"] {
+    background: #e0f2fe;
+    border-radius: 12px;
+}
+
+.stTabs [data-baseweb="tab-panel"] {
+    background: white;
+    padding: 24px;
+    border-radius: 20px;
+    box-shadow: 0 18px 44px rgba(15,118,110,0.12);
+    margin-top: 16px;
+}
+
+/* ===================================================
+   FOOTER
+=================================================== */
+.footer {
+    text-align: center;
+    font-size: 13px;
+    color: #64748b;
+    margin-top: 48px;
+}
+
+/* ===================================================
+   HIDE STREAMLIT CHROME
+=================================================== */
+[data-testid="stSidebar"] {
+    display: none;
+}
+
+button[kind="header"] {
+    display: none;
+}
+
+header {
+    visibility: hidden;
+    height: 0px;
+}
+
+
