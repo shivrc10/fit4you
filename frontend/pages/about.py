@@ -16,9 +16,7 @@ except FileNotFoundError:
     pass
 
 
-logo_col, spacer, nav1, nav2, nav3 = st.columns(
-    [2.2, 6.0, 1.2, 1.2, 1.2]
-)
+logo_col, spacer, nav1, nav2, nav3 = st.columns([2.2, 6.0, 1.2, 1.2, 1.2])
 
 with logo_col:
     st.markdown(
@@ -28,7 +26,6 @@ with logo_col:
             <span class="logo-text">FIT4YOU</span>
         </div>
         """,
-        
         unsafe_allow_html=True,
     )
     st.caption("Where multiple perspectives shape safer fitness decisions")
@@ -83,6 +80,15 @@ st.markdown(
       <li>Human control by design</li>
     </ul>
   </div>
+  
+  <div class="st-key-card-profile">
+    <h3>Role of the human</h3>
+    <ul>
+      <li>FIT4YOU does not replace human judgment.</li>
+      <li>Instead, it supports users by surfacing evidence, risks,
+      and reasoning so decisions can be made deliberately.</li>
+    </ul>
+  </div>
 
   <!-- CARD 4: SCOPE & CONTEXT -->
   <div class="st-key-card-profile" style="border-left: 4px solid #f97316;">
@@ -98,10 +104,8 @@ st.markdown(
 
 </div>
 """,
-    unsafe_allow_html=True
+    unsafe_allow_html=True,
 )
-
-
 
 
 # ===================================================
