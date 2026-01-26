@@ -73,14 +73,9 @@ for k, v in DEFAULT_STATE.items():
     st.session_state.setdefault(k, v)
 
 def reset_app():
-    # for k, v in DEFAULT_STATE.items():
-    #     st.session_state[k] = v
-    # st.rerun()
-    # def reset_app():
-    for k in list(st.session_state.keys()):
-        if k not in ("profile", "goal"):
-            del st.session_state[k]
+    st.session_state.clear()
     st.rerun()
+
 
 
 # ===================================================
@@ -100,7 +95,7 @@ def show_agent_dialog(agent_name: str):
 
     agent_data = st.session_state.agent_outputs.get(agent_name)
 
-    st.divider()
+    # st.divider()
 
     if agent_data:
         st.markdown(agent_data.get("content", "_No content available._"))
@@ -161,9 +156,11 @@ left, right = st.columns([1, 2.2], gap="large")
 # LEFT
 with left:
     with st.container(key="card-profile"):
+
         st.subheader("👤 Profile & Goal")
-        st.text_area("Profile", key="profile", height=120)
-        st.text_input("Goal", key="goal")
+
+        st.text_area("Profile", key="profile", height=120,placeholder = "42yo male, 88kg, bad knees, desk job")
+        st.text_input("Goal", key="goal", placeholder = "Lose fat and get strong without joint pain")
 
         if st.button("Generate Plan", type="primary"):
             st.session_state.loading = True
@@ -179,13 +176,11 @@ with left:
         with h_l:
             st.subheader("Agents Working")
             st.caption("ℹ️ Click agent icon to view its contribution")
-
         with h_r:
-            if st.button("", icon=":material/refresh:", help="Reset"):
+            if st.button("", icon=":material/refresh:", help="Clear Input"):
                 reset_app()
-
-        agents = ["Doctor", "Critic", "Supporter", "Summarizer"]
-        icons = [" 🧑‍⚕️ ", " ✍️ ", " ✨ ", " 🧾 "]
+        agents = ["Doctor", "Critic", "Supporter"]
+        icons = [" 🧑‍⚕️ ", " ✍️ ", " ✨ "]
 
         cols = st.columns(4)
         for i, (icon, name) in enumerate(zip(icons, agents)):

@@ -123,7 +123,7 @@ html, body {
    AGENT BUTTONS
 =================================================== */
 .st-key-card-agents button {
-    width: 100px ;
+    width: 200px ;
     height: 25px ;
     border-radius: 16px ;
     border: 1.5px solid #e2e8f0;
@@ -134,6 +134,7 @@ html, body {
 }
 
 .st-key-card-agents button:hover {
+    /* width: 100px; */
     border-color: #2563eb !important;
     box-shadow: 0 8px 20px rgba(37,99,235,0.18);
     transform: translateY(-2px);
