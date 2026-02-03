@@ -15,6 +15,11 @@ from langchain_groq import ChatGroq
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 from textwrap import wrap
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
+from reportlab.lib import colors
+from reportlab.lib.units import cm
+from textwrap import wrap
 
 import re
 
@@ -134,25 +139,25 @@ def doctor_node(state: AgentState):
    
     context = "\n\n".join(context_blocks)
    
-    prompt = f"""You are Doctor — evidence-based physician using the FULL 272k PubMedQA dataset.
+    prompt = f"""You are Evidence Retrieval Agent using the FULL 272k PubMedQA dataset.
 Use ONLY the real studies below. Cite them as [PMID: 12345678].
-Real evidence retrieved:
+Retrieved evidence:
 {context}
 User: {state['user_profile']}
 Goal: {state['user_question']}
 Give only medical facts, safety profile, and evidence level.
 Never give training plans.
 Output exactly:
-DOCTOR: [your response with real PMID citations]"""
+Evidence Retrieved: [your response with real PMID citations]"""
    
     resp = doctor_llm.invoke(prompt)
     sources_str = " | ".join([f"[bold cyan]PMID:{pid}[/bold cyan]" for pid in results['ids'][0][:4]])
     console.print(Panel(resp.content + f"\n\nReal sources → {sources_str}",
-                        title="[blue]Doctor – 272k Real PubMed[/blue]", border_style="blue"))
+                        title="[blue]Evidence Retrieval – 272k Real PubMed[/blue]", border_style="blue"))
    
     thought = {
         "id": len(state["thoughts"])+1,
-        "agent": "Doctor",
+        "agent": "Evidence Retrieval Agent",
         "content": resp.content,
         "sources": results['ids'][0][:4]
     }
@@ -164,14 +169,14 @@ DOCTOR: [your response with real PMID citations]"""
 # ================================
 def critic_node(state: AgentState):
     prev = state["thoughts"][-1]["content"]
-    prompt = f"""You are Critic. Attack weak evidence, small samples, bias, or overgeneralization.
-Doctor claimed (with real PMIDs):
+    prompt = f"""You are Validator Agent. Attack weak evidence, small samples, bias, or overgeneralization.
+Evidence Retrieval claimed (with real PMIDs):
 {prev}
 Tear it apart if needed. Be ruthless but fair.
-CRITIC: """
+Validator: """
    
     resp = critic_llm.invoke(prompt)
-    console.print(Panel(resp.content, title="[red]Critic[/red]", border_style="red"))
+    console.print(Panel(resp.content, title="[red]Validator[/red]", border_style="red"))
    
     thought = {"id": len(state["thoughts"])+1, "agent": "Critic", "content": resp.content}
     return {"thoughts": state["thoughts"] + [thought]}
@@ -213,7 +218,7 @@ Output ONLY the summary bullets, no intro/outro.
     console.print(Panel(summary_text, title="[bold magenta]Evidence Debate Summary (150 words max)[/bold magenta]", border_style="magenta"))
    
     while True:
-        choice = input("\nDo you agree with this summary and want to proceed to Coach’s personalized plan? (y/n): ").strip().lower()
+        choice = input("\nDo you agree with this summary and want to proceed to your personalized plan? (y/n): ").strip().lower()
         if choice in ["y", "n"]:
             break
    
@@ -420,7 +425,7 @@ def coach_node(state: AgentState):
     )
     
     
-    prompt = f"""You are Coach — the practical expert.
+    prompt = f"""You are Action Planning Agent — the practical expert.
 Full debate with REAL PubMed evidence:
 {debate}
 NEVER repeat medical facts, risks, or motivation already said.
@@ -433,7 +438,7 @@ Include:
 • Nutrition timing
 • Habit system
 • 2 questions at the end
-🧡 COACH’S ACTION PLAN
+🧡 ACTION PLAN
 """
 
     resp = coach_llm.invoke(prompt)
@@ -501,7 +506,7 @@ Include:
     console.print(
         Panel(
             plan_text,
-            title="[bold yellow]Coach (YOU) – Final Plan[/bold yellow]",
+            title="[bold yellow]Your Final Plan[/bold yellow]",
             border_style="yellow"
         )
     )
@@ -564,41 +569,106 @@ def generate_plan_pdf(filename: str, profile: str, goal: str, plan_text: str):
     c = canvas.Canvas(filename, pagesize=A4)
     width, height = A4
 
-    margin_x = 50
-    margin_y = 50
+    margin_x = 2.2 * cm
+    margin_y = 2.2 * cm
     y = height - margin_y
 
-    # Title
-    c.setFont("Helvetica-Bold", 18)
-    c.drawString(margin_x, y, "Personalized Fitness Plan")
-    y -= 30
-
-    # Profile & goal
-    c.setFont("Helvetica", 11)
-    c.drawString(margin_x, y, f"Profile: {profile}")
-    y -= 15
-    c.drawString(margin_x, y, f"Goal: {goal}")
-    y -= 25
-
-    # Body text (Coach plan)
-    c.setFont("Helvetica", 11)
-
-    def draw_wrapped_text(text: str, line_width: int = 90):
+    def new_page():
         nonlocal y
-        for line in text.split("\n"):
-            # wrap long lines
-            wrapped_lines = wrap(line, line_width) if line.strip() else [""]
-            for wl in wrapped_lines:
-                if y <= margin_y:
-                    c.showPage()
-                    c.setFont("Helvetica", 11)
-                    y = height - margin_y
-                c.drawString(margin_x, y, wl)
-                y -= 14
+        c.showPage()
+        y = height - margin_y
+        c.setFont("Helvetica", 11)
 
-    draw_wrapped_text(plan_text)
+    # =========================
+    # Title
+    # =========================
+    c.setFont("Helvetica-Bold", 20)
+    c.drawString(margin_x, y, "Personalized Fitness Plan")
+    y -= 14
+
+    c.setStrokeColor(colors.grey)
+    c.line(margin_x, y, width - margin_x, y)
+    y -= 20
+
+    # =========================
+    # Profile & Goal
+    # =========================
+    c.setFont("Helvetica-Bold", 11)
+    c.drawString(margin_x, y, "User Profile")
+    y -= 14
+
+    c.setFont("Helvetica", 11)
+    for line in wrap(profile, 90):
+        c.drawString(margin_x, y, line)
+        y -= 14
+
+    y -= 8
+    c.setFont("Helvetica-Bold", 11)
+    c.drawString(margin_x, y, "Goal")
+    y -= 14
+
+    c.setFont("Helvetica", 11)
+    for line in wrap(goal, 90):
+        c.drawString(margin_x, y, line)
+        y -= 14
+
+    y -= 18
+
+    # =========================
+    # Plan Content
+    # =========================
+    c.setFont("Helvetica-Bold", 13)
+    c.drawString(margin_x, y, "Coach’s Action Plan")
+    y -= 16
+
+    c.setFont("Helvetica", 11)
+
+    for block in plan_text.split("\n"):
+        if y <= margin_y + 40:
+            new_page()
+
+        # Headings (heuristic)
+        if block.strip().endswith(":") or block.strip().startswith("**"):
+            y -= 6
+            c.setFont("Helvetica-Bold", 11)
+            c.drawString(margin_x, y, block.replace("*", ""))
+            y -= 14
+            c.setFont("Helvetica", 11)
+            continue
+
+        # Tables (render as monospaced block)
+        if "|" in block:
+            c.setFont("Courier", 9)
+            c.drawString(margin_x, y, block)
+            y -= 12
+            c.setFont("Helvetica", 11)
+            continue
+
+        # Normal text
+        wrapped = wrap(block, 95) if block.strip() else [""]
+        for line in wrapped:
+            if y <= margin_y + 20:
+                new_page()
+            c.drawString(margin_x, y, line)
+            y -= 14
+
+    # =========================
+    # Footer
+    # =========================
+    y -= 10
+    c.setStrokeColor(colors.lightgrey)
+    c.line(margin_x, y, width - margin_x, y)
+    y -= 14
+
+    c.setFont("Helvetica-Oblique", 9)
+    c.drawString(
+        margin_x,
+        y,
+        "Generated by Fit4You — Evidence-Aware, Human-in-the-Loop Fitness Planning"
+    )
 
     c.save()
+
 
 # ================================
 # 10. LLM as a Judge

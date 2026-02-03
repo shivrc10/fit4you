@@ -24,3 +24,7 @@
 {"role_scores": {"Doctor": 0.3333333333333333, "Critic": 0.8, "Supporter": 0.4, "Coach": 0.6666666666666666}, "overall": 0.5499999999999999}
 {"role_scores": {"Doctor": 0.8333333333333334, "Critic": 0.8, "Supporter": 0.2, "Coach": 0.5}, "overall": 0.5833333333333333}
 {"role_scores": {"Doctor": 0.6666666666666666, "Critic": 1.0, "Supporter": 0.6, "Coach": 0.3333333333333333}, "overall": 0.65}
+{"role_scores": {"Doctor": 0.8333333333333334, "Critic": 0.8, "Supporter": 0.4, "Coach": 0.3333333333333333}, "overall": 0.5916666666666667}
+{"role_scores": {"Evidence Retrieval Agent": 0.0, "Critic": 0.6, "Supporter": 0.4, "Coach": 0.6666666666666666}, "overall": 0.41666666666666663}
+{"role_scores": {"Evidence Retrieval Agent": 0.0, "Critic": 0.6, "Supporter": 0.0, "Coach": 0.5}, "overall": 0.275}
+{"role_scores": {"Evidence Retrieval Agent": 0.0, "Critic": 0.4, "Supporter": 0.4, "Coach": 0.5}, "overall": 0.325}
