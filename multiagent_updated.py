@@ -148,7 +148,7 @@ Goal: {state['user_question']}
 Give only medical facts, safety profile, and evidence level.
 Never give training plans.
 Output exactly:
-Evidence Retrieved: [your response with real PMID citations]"""
+EVIDENCE RETRIEVAL: [your response with real PMID citations]"""
    
     resp = doctor_llm.invoke(prompt)
     sources_str = " | ".join([f"[bold cyan]PMID:{pid}[/bold cyan]" for pid in results['ids'][0][:4]])
