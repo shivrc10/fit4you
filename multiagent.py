@@ -199,7 +199,7 @@ SUPPORTER: """
     return {"thoughts": state["thoughts"] + [thought]}
 
 # ================================
-# 7. Summary Node (new)
+# 7. Summary Node
 # ================================
 def summary_node(state: AgentState):
     debate = "\n\n".join([f"{t['agent']}: {t['content'][:400]}" for t in state["thoughts"]])
@@ -218,6 +218,7 @@ Output ONLY the summary bullets, no intro/outro.
     console.print(Panel(summary_text, title="[bold magenta]Evidence Debate Summary (150 words max)[/bold magenta]", border_style="magenta"))
     
     return {
+        **state,
         "evidence_complete": True,
         "summary": summary_text
     }
