@@ -81,6 +81,14 @@ st.markdown(
       check benefits, risks, and fairness.
     </p>
   </div>
+  
+  <div class="st-key-card-profile">
+    <h3>🧾 You approve every step</h3>
+    <p title="Nothing moves forward without your approval.">
+        You see a clear summary of pros, risks, and evidence strength.
+        The plan continues only if you approve.
+      </p>
+  </div>
 
 
   <div class="st-key-card-profile">

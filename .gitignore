@@ -5,6 +5,10 @@ venv/
 __pycache__/
 *.pyc
 
+# Vector DB / binaries
+*.sqlite3
+chroma.sqlite3
+
 # OS files
 .DS_Store
 
