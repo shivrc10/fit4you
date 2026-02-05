@@ -216,20 +216,11 @@ Output ONLY the summary bullets, no intro/outro.
     summary_text = resp.content.strip()
    
     console.print(Panel(summary_text, title="[bold magenta]Evidence Debate Summary (150 words max)[/bold magenta]", border_style="magenta"))
-   
-    while True:
-        choice = input("\nDo you agree with this summary and want to proceed to your personalized plan? (y/n): ").strip().lower()
-        if choice in ["y", "n"]:
-            break
-   
-    if choice == "y":
-        return {
-            "evidence_complete": True,
-            "summary": summary_text
-        }
-    else:
-        console.print("[yellow]Regenerating evidence debate...[/yellow]\n")
-        return {"thoughts": [], "evidence_complete": False}  # Reset for regeneration
+    
+    return {
+        "evidence_complete": True,
+        "summary": summary_text
+    }
     
     
     
@@ -561,6 +552,54 @@ graph.add_conditional_edges(
 graph.add_edge("coach", END)
 
 app = graph.compile()
+
+# ===================================================
+# Public API used by Streamlit
+# ===================================================
+
+def run_pipeline(profile: str, goal: str) -> dict:
+    """
+    Streamlit-safe backend entry point.
+    No input(), no prints, no blocking calls.
+    """
+
+    initial_state = {
+        "user_question": goal,
+        "user_profile": profile,
+        "thoughts": [],
+        "final_answer": "",
+        "evidence_complete": False
+    }
+
+    final_state = None
+
+    for step in app.stream(initial_state):
+        for node_name, node_state in step.items():
+            if node_name == "coach":
+                final_state = node_state
+
+    if not final_state or not final_state.get("final_answer"):
+        return {
+            "plan_text": {"raw_plan": ""},
+            "agents": []
+        }
+
+    # Build agent outputs for frontend
+    agent_outputs = []
+    for t in final_state.get("thoughts", []):
+        agent_outputs.append({
+            "agent": t.get("agent"),
+            "content": t.get("content"),
+            "sources": t.get("sources", [])
+        })
+
+    return {
+        "plan_text": {
+            "raw_plan": final_state["final_answer"]
+        },
+        "agents": agent_outputs
+    }
+
 
 # ================================
 # PDF Generator
